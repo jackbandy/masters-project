@@ -1,0 +1,20 @@
+\contentsline {chapter}{Acknowledgments}{iii}{chapter*.1}
+\contentsline {chapter}{Table of Contents}{iv}{section*.2}
+\contentsline {chapter}{List of Figures}{v}{section*.3}
+\contentsline {chapter}{List of Tables}{vi}{section*.4}
+\contentsline {chapter}{\chapternumberline {1}Background}{1}{chapter.1}
+\contentsline {section}{\numberline {1.1}Project Components}{1}{section.1.1}
+\contentsline {subsection}{An Interactive Approach to Automated Transcription}{1}{section*.5}
+\contentsline {subsection}{Word Tracing}{1}{section*.6}
+\contentsline {section}{\numberline {1.2}Literature Review}{1}{section.1.2}
+\contentsline {subsection}{2009}{1}{section*.7}
+\contentsline {subsection}{2012}{1}{section*.8}
+\contentsline {subsection}{2013}{1}{section*.9}
+\contentsline {subsection}{2014}{2}{section*.10}
+\contentsline {subsection}{2015}{2}{section*.11}
+\contentsline {subsection}{2016}{2}{section*.12}
+\contentsline {subsection}{Surveys}{2}{section*.13}
+\contentsline {chapter}{\chapternumberline {2}The First Chapter}{3}{chapter.2}
+\contentsline {section}{\numberline {2.1}The First Section}{3}{section.2.1}
+\contentsline {chapter}{Bibliography}{4}{section*.15}
+\contentsline {chapter}{Vita}{6}{chapter*.16}
