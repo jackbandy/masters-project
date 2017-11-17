@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 def main():
     # step 1: load in the samples
-    training_images, im_height, im_width  = collectSamples('samples')
+    training_images, im_height, im_width  = collectSamples('data/individual_samples')
     n_samples = training_images.shape[0]
     training_images = training_images.reshape(n_samples, im_height, im_width,
             1) / 255.
@@ -26,11 +26,16 @@ def main():
     vae = buildNetwork(input_height=im_height, input_width=im_width)
     vae.compile(optimizer='adadelta',loss='binary_crossentropy')
     vae.fit(training_images, training_images,
-            epochs=100,
+            epochs=2,
             batch_size=n_samples,
             shuffle=True,
             validation_data=(training_images, training_images),
             )
+            
+    layer_shapes = [layer.output.get_shape() for layer in vae.layers]
+    print("Shapes:\n{}".format(layer_shapes))
+    layer_seven = vae.layers[7].output
+    print("Layer 7: {}".format(layer_seven))
 
     # step 3: visualize results
     output_ims = vae.predict(training_images)

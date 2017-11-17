@@ -2,6 +2,7 @@
 data/*
 *.gif
 *DS_Store
+*.swp
 
 ### LaTeX stuff... blah
 *.aux
