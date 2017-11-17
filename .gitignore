@@ -1,6 +1,5 @@
 # Project-specific stuff
 data/*
-*.gif
 *DS_Store
 *.swp
 
