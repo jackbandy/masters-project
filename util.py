@@ -17,7 +17,7 @@ def loadImage(file_path):
         invert = PIL.ImageOps.invert(p_im)
         return np.array(invert)
     except:
-        print("Unable to read {} as image".format(f))
+        print("Unable to read image at {}".format(file_path))
         return None
     
 
