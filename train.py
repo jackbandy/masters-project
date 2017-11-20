@@ -28,7 +28,7 @@ def main():
     vae = buildNetwork(input_height=im_height, input_width=im_width)
     vae.compile(optimizer='adadelta',loss='binary_crossentropy')
     vae.fit(training_images, training_images,
-            epochs=5,
+            epochs=20,
             batch_size=10,
             shuffle=True,
             validation_data=(training_images, training_images),
@@ -36,16 +36,18 @@ def main():
             
 
     # step 3: cluster
-    predict_images = np.random.permutation(training_images[0:5])
+    predict_images = np.random.permutation(training_images[0:30])
     intermediate_layer_model = Model(inputs=vae.input, outputs=vae.layers[8].output)
     encoded = intermediate_layer_model.predict(predict_images)
     encoded = np.reshape(encoded, (encoded.shape[0], -1))
     print("Layer 7 shape: {}".format(encoded.shape))
     print("Layer 7 sample: {}".format(encoded[0]))
 
-    kmeans = cluster.createNClusters(encoded, 12)
-    kmeans.predict(predict_images)
-   
+    kmeans = cluster.createNClusters(encoded, 20)
+    labels = kmeans.predict(encoded)
+
+    util.saveImagesWithLabels(images=predict_images, labels=labels,
+                                directory='test-labels')
     
     # step 4: visualize results
     output_ims = vae.predict(predict_images)

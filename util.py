@@ -7,7 +7,7 @@ from scipy import misc
 from PIL import Image, ImageOps
 import PIL.ImageOps
 import numpy as np
-
+import imageio
 
 
 def loadImage(file_path):
@@ -39,3 +39,12 @@ def removeBackground(image):
     no_background_image = np.where(image > threshold, image, 0)
 
     return no_background_image
+
+
+
+def saveImagesWithLabels(images, labels, directory='predictions'):
+    counts = [0]*(max(labels)+1)
+    for i in range(images.shape[0]):
+        imageio.imwrite('{}/{}-sample{}.jpg'.format(directory, labels[i],
+            counts[labels[i]]), images[i])
+        counts[labels[i]] += 1

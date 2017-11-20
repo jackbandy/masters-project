@@ -5,6 +5,7 @@ Cluster VAE-encoded features into words
 
 
 import numpy as np
+from sklearn.cluster import KMeans
 
 
 def createClusters(features):
@@ -14,4 +15,5 @@ def createClusters(features):
 
 def createNClusters(features, n_clusters):
     #scikit learn
-    pass
+    model = KMeans(n_clusters=n_clusters, random_state=0).fit(features)
+    return model
