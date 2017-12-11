@@ -16,14 +16,35 @@ def main():
     page_image = util.loadImage(image_path)
     binary_image = util.removeBackground(page_image)
 
-    line_locations = getHorizontalLines(binary_image)
+    plt.imshow(binary_image,cmap='gray')
 
-    plt.imshow(binary_image)
+    line_locations = getHorizontalLines(binary_image)
+    all_word_locations = []
+    for i in range(len(line_locations) - 1):
+        # plot the horizontal line
+        plt.plot((0, binary_image.shape[1]), (line_locations[i],
+            line_locations[i]), 'w-')
+        line_image = binary_image[line_locations[i]:line_locations[i+1]]
+        line_word_locations = getVerticalLines(line_image)
+        for x in line_word_locations:
+            plt.plot((x,x), (line_locations[i], line_locations[i+1]), 'r-')
+        all_word_locations.append(line_word_locations)
+    plt.show()
+    exit()
+
+    '''
     for line in line_locations:
         to_plot = np.array([line for _ in range(binary_image.shape[1])])
-        plt.plot(to_plot)
-    plt.show()
+        plt.plot(to_plot, 'w')
+    '''
 
+
+def getVerticalLines(line_image):
+    im_array = np.array(line_image)
+    hist = np.sum(im_array, axis=0)
+    print("Shape: {}".format(hist.shape))
+    minimums = np.where(hist == 0)[0]
+    return minimums
 
 
 def getHorizontalLines(image):

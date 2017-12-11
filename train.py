@@ -14,10 +14,17 @@ from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 import matplotlib.pyplot as plt
 import util, cluster
 
+EPOCHS = 50
+N_CLUSTERS = 50
+
+training_samples_path = 'data/ordered_samples'
+vae_save_path = 'vae_encoder_{}epochs.h5'.format(EPOCHS)
+kmeans_save_path = 'kmeans_{}epochs_{}clusters.sav'.format(EPOCHS, N_CLUSTERS)
+
 
 def main():
     # step 1: load in the samples
-    training_images, im_height, im_width  = collectSamples('data/lined_samples')
+    training_images, im_height, im_width = util.collectSamples(training_samples_path)
     n_samples = training_images.shape[0]
     training_images = training_images.reshape(n_samples, im_height, im_width,
             1) / 255.
@@ -28,7 +35,7 @@ def main():
     vae = buildNetwork(input_height=im_height, input_width=im_width)
     vae.compile(optimizer='adadelta',loss='binary_crossentropy')
     vae.fit(training_images, training_images,
-            epochs=20,
+            epochs=EPOCHS,
             batch_size=10,
             shuffle=True,
             validation_data=(training_images, training_images),
@@ -36,19 +43,20 @@ def main():
             
 
     # step 3: cluster
-    predict_images = np.random.permutation(training_images[0:30])
+    predict_images = np.random.permutation(training_images)
     intermediate_layer_model = Model(inputs=vae.input, outputs=vae.layers[8].output)
+    intermediate_layer_model.save(vae_save_path)
     encoded = intermediate_layer_model.predict(predict_images)
     encoded = np.reshape(encoded, (encoded.shape[0], -1))
-    print("Layer 7 shape: {}".format(encoded.shape))
-    print("Layer 7 sample: {}".format(encoded[0]))
+    kmeans = cluster.createNClusters(encoded, N_CLUSTERS)
 
-    kmeans = cluster.createNClusters(encoded, 20)
     labels = kmeans.predict(encoded)
-
     util.saveImagesWithLabels(images=predict_images, labels=labels,
                                 directory='test-labels')
-    
+    cluster.saveClusters(centroids=kmeans.cluster_centers_)
+    cluster.saveClusterer(model=kmeans, file_path=kmeans_save_path)
+   
+
     # step 4: visualize results
     output_ims = vae.predict(predict_images)
     n = 5
@@ -63,6 +71,7 @@ def main():
         plt.imshow(output_ims[i].reshape(im_height, im_width))
         plt.gray()
     plt.show()
+    exit()
 
 
 
@@ -107,7 +116,7 @@ def collectSamples(directory):
 
 
 def buildNetwork(input_height, input_width):
-    neurons = [2, 4, 8, 16]
+    neurons = [4, 4, 8, 16]
     input_img = Input(shape=(input_height, input_width, 1))
     x = Conv2D(neurons[0], (3, 3), activation='relu', padding='same')(input_img)
     x = MaxPooling2D((2, 2), padding='same')(x)
