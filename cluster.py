@@ -7,13 +7,17 @@ Cluster VAE-encoded features into words
 import numpy as np
 from sklearn.externals import joblib
 import pickle
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, AgglomerativeClustering
 
 
 def createClusters(features):
     # how many clusters though
     pass
 
+
+def predictAgglomNClusters(features, n_clusters):
+    model = AgglomerativeClustering(n_clusters=n_clusters).fit_predict(features)
+    return model
 
 
 def createNClusters(features, n_clusters):
