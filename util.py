@@ -45,8 +45,8 @@ def binarizeImage(image):
 def removeBackground(image):
     image_array = np.array(image)
     hist, bin_edges = np.histogram(image_array, bins='auto')
-    # choose the bin edge halfway (shortcut)
-    halfway = int(bin_edges.shape[0] / 2)
+    # choose the bin edge (shortcut)
+    halfway = int(bin_edges.shape[0] * .7)
     threshold = bin_edges[halfway]
     no_background_image = np.where(image > threshold, image, 0)
 
