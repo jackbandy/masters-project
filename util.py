@@ -19,7 +19,7 @@ def loadImage(file_path):
         im = misc.imread(file_path, flatten=True)
         p_im = PIL.Image.fromarray(im).convert('L')
         invert = PIL.ImageOps.invert(p_im)
-        return np.array(invert), raw_im
+        return np.array(invert)
     except:
         print("Unable to read image at {}".format(file_path))
         return None
