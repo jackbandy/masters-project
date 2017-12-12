@@ -15,10 +15,11 @@ import matplotlib.pyplot as plt
 
 def loadImage(file_path):
     try:
+        raw_im = misc.imread(file_path)
         im = misc.imread(file_path, flatten=True)
         p_im = PIL.Image.fromarray(im).convert('L')
         invert = PIL.ImageOps.invert(p_im)
-        return np.array(invert)
+        return np.array(invert), raw_im
     except:
         print("Unable to read image at {}".format(file_path))
         return None

@@ -8,13 +8,14 @@ import os
 from scipy import misc
 from scipy.signal import argrelmin
 import numpy as np
+import imageio
 import matplotlib.pyplot as plt
 import util
 
 
 def main():
     image_path = 'data/page-1-full.gif'
-    page_image = util.loadImage(image_path)
+    page_image, raw_image = util.loadImage(image_path)
     binary_image = util.removeBackground(page_image)
 
 
@@ -22,30 +23,47 @@ def main():
     all_word_locations = []
     plt.imshow(binary_image,cmap='gray')
     #for i in range(len(line_locations) - 1):
-    for i in range(13,40):
+    current_word = 82
+    for i in range(12,45):
         # plot the horizontal line
         print("Working on line {}".format(i))
         plt.plot((0, binary_image.shape[1]), (line_locations[i],
             line_locations[i]), 'w-')
         
-        line_image = page_image[line_locations[i]:line_locations[i+1]]
+        line_image = raw_image[line_locations[i]:line_locations[i+1]]
         binary_line_image = binary_image[line_locations[i]:line_locations[i+1]]
-        '''
-        if i < 4:
-            line_word_locations = getVerticalLines(binary_line_image, approx_start=460, n_words=wpl[i])
-        else:
-            line_word_locations = getVerticalLines(binary_line_image, n_words=wpl[i])
-        '''
+        endpt = findEnd(binary_line_image)
+        left = 75
         for x in starts[i]:
             plt.plot((x,x), (line_locations[i], line_locations[i+1]), 'r-')
+            imageio.imwrite('data/new_samples/unknown-{}.gif'.format(current_word),
+                    line_image[:,left:x])
+            current_word += 1
+            left = x
+        plt.plot((endpt,endpt), (line_locations[i], line_locations[i+1]), 'r-')
+        print("endpoint word line {}: {}:{}/{}".format(i, left, endpt, line_image.shape[1]))
+        imageio.imwrite('data/new_samples/unknown-{}.gif'.format(current_word),
+                    line_image[:,starts[i][-1]:endpt])
+        current_word += 1
+
+    plt.plot((0, binary_image.shape[1]), (line_locations[-1],
+            line_locations[-1]), 'w-')
     plt.show()
     exit()
 
-    '''
-    for line in line_locations:
-        to_plot = np.array([line for _ in range(binary_image.shape[1])])
-        plt.plot(to_plot, 'w')
-    '''
+
+
+def findEnd(line_image, approx_end=1640):
+    im_array = np.array(line_image)
+    hist = np.sum(im_array, axis=0)
+    approx_thresh = 2500
+    approx_space_width = 16
+    s_w = approx_space_width
+    current_col = approx_end
+    while np.sum(hist[current_col:current_col+s_w]) < (approx_thresh*s_w):
+        current_col -= 1
+
+    return min(current_col+approx_space_width, line_image.shape[1]-1)
 
 
 def getVerticalLines(line_image, approx_start=75, approx_end=1640, n_words=0):
@@ -106,11 +124,11 @@ def getHorizontalLines(image):
     approx_start = 60
     approx_ppl = 80
     approx_thresh = 100000
-    text_lines = 41
+    text_lines = 45
 
     current_line = approx_start
-    line_locations = [0]*(text_lines)
-    for i in range(len(line_locations)):
+    line_locations = [0]*(text_lines+1)
+    for i in range(len(line_locations)-1):
         # approximate a boundary line between each line of text
         current_min = approx_thresh
         current_min_index = current_line
@@ -128,6 +146,7 @@ def getHorizontalLines(image):
                     break
         line_locations[i] = current_min_index
 
+    line_locations[-1] = 4560
     return line_locations
 
 
@@ -147,8 +166,8 @@ starts = [
 [],
 [],
 [],
-[300, 600, 850,1080,1340,1590],
-[220, 380, 615, 990, 1370, 1600],
+[300,600,850,1080,1340],
+[220,380,615,990,1370],
 [285,520,720,940,1140,1370],
 [370,600,830,1070,1300],
 [330,560,930,1320,1545],
@@ -173,9 +192,13 @@ starts = [
 [330,445,670,775,910,1100,1390,1495],
 [275,540,670,920,1260,1435],
 [380,720,830,950,1150,1360,1450],
-[320,530,790,920,1300,1430],
-[250,480,560,795,950,1340]
-
+[385,530,790,920,1300,1430],
+[250,480,560,795,950,1340],
+[205,440,740,960,1170,1300,1470],
+[170,280,620,820,1135,1210,1340],
+[180,300,470,810,900,1110,1210,1315,1390],
+[330,470,660,770,1060,1245,1400],
+[180,400,660,760,970,1110,1280],
 ]
 
 if __name__ == "__main__":
