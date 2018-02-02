@@ -172,7 +172,7 @@
 \newcommand{\@theabstract}{}
 \newcommand{\@thekeywords}{}
 \newcommand{\@theadvisor}{}
-\newcommand{\@thedept}{Mathematics}
+\newcommand{\@thedept}{Computer Science}
 \newcommand{\@thedgs}{}
 \newcommand{\dgs}[1]{
   \renewcommand{\@thedgs}{#1}
@@ -183,7 +183,7 @@
 \newcommand{\keywords}[1]{
   \renewcommand{\@thekeywords}{#1}
 }
-\newcommand{\advisor}[2][Mathematics]{
+\newcommand{\advisor}[2][Computer Science]{
   \renewcommand{\@theadvisor}{#2}
   \renewcommand{\@thedept}{#1}
 }
@@ -218,7 +218,7 @@
     \end{center}
     \vfill
     \hspace*{\fill} Director of
-    Dissertation:\underline{\parbox{.3\linewidth}{\if@sigs\hfill\@theadvisor\ \hfill\else\hfill\fi}}\newline \newline
+    Project:\underline{\parbox{.3\linewidth}{\if@sigs\hfill\@theadvisor\ \hfill\else\hfill\fi}}\newline \newline
     \hspace*{\fill} Director of Graduate
     Studies:\underline{\parbox{.3\linewidth}{\if@sigs\hfill\@thedgs\ \hfill\else
     \hfill\fi}}\newline \newline
@@ -238,7 +238,7 @@
     \parbox[c][\@abheadheight][t]{\linewidth}{
       \begin{center}
         \vspace{-.75\baselineskip}
-        ABSTRACT OF DISSERTATION
+        ABSTRACT OF PROJECT
       \end{center}
       }
     \begin{center}
@@ -269,7 +269,7 @@
   \thispagestyle{empty}
     \rule{0in}{\@covertopskip}
     \begin{center}
-      DISSERTATION
+      MASTER'S PROJECT
       \vfill
       \@theauthor\\
       \vfill
@@ -302,13 +302,13 @@
       \par\noindent
       \rule{\@titlelinewidth}{1pt}\\
       \vspace{\parskip}
-      DISSERTATION\\
+      MASTER'S PROJECT\\
       \rule{\@titlelinewidth}{1pt}\\
       \parbox[c][][t]{\@titlelinewidth}{
           \begin{center}
-            A dissertation submitted in partial
+            A document submitted in partial
             fulfillment of the requirements for the degree of 
-            Doctor of Philosophy in the 
+            Master of Science in the 
             College of Arts and Sciences
             at the
             University of Kentucky
@@ -334,7 +334,7 @@
   \thispagestyle{empty}
    \rule{0in}{\@abcoverpageabove}
     \begin{center}
-      ABSTRACT OF DISSERTATION
+      ABSTRACT OF PROJECT
       \vfill
       \@theauthor\\
       \vfill
@@ -364,13 +364,13 @@
       \par\noindent
       \rule{\@titlelinewidth}{1pt}\\
       \vspace{\parskip}
-      ABSTRACT OF DISSERTATION\\
+      ABSTRACT OF PROJECT\\
       \rule{\@titlelinewidth}{1pt}\\
       \parbox[c][][t]{\@titlelinewidth}{
           \begin{center}
-            A dissertation submitted in partial
+            A document submitted in partial
             fulfillment of the requirements for the degree of 
-            Doctor of Philosophy in the 
+            Master of Science in the 
             College of Arts and Sciences
             at the
             University of Kentucky

@@ -17,7 +17,7 @@
 \author{Jack Bandy}
 \title{INTERACTIVE MACHINE LEARNING FOR WORD RECOGNITION ON DAMAGED HANDWRITTEN DOCUMENTS}
 \abstract{an abstract}
-\advisor{your advisor}
+\advisor{Brent Sealesr}
 \keywords{keywords go here}
 \dgs{DGS name here}
 %the title pages
@@ -35,16 +35,37 @@ Dedicated to things (optional)
 %----------------------------------------------
 \mainmatter
 \chapter{Background}
+\section{Motivation}
+On the surface, optical character recognition, word recognition, and handwriting recognition appear to be solved problems. The explosion of machine learning research in recent years has led to drastic improvements in performance on these tasks, and many advancements have found their way to consumer products. For example, everyday software allows users to search within scans or photographs of printed typeface, and note-taking software can now interpret penmanship that would be indecipherable to many human readers.
+
+However, the process of transcribing ancient documents presents a niche area of text recognition which is not addressed well by standard approaches. Many historical documents, including those reviewed in this project, were meticulously transcribed with legibility comparable to typeface, suggesting that automated transcription would be straightforward. But over time, these documents have incurred damage of all different kinds. The characters originally may have looked like typeface, but after hundreds of years of human handling, physical corrosion, chemical decay, and other processes, reading certain parts of these documents is an arduous task even for  skilled textual analysts.
+
+For such cases, neither fully human transcription nor fully automated transcription is ideal. Human transcription is incredibly costly, and resources such as time and skilled personnel are often constrained. An automated transcription algorithm may be able to transcribe certain portions of a historical document, but the damaged portions can distort the algorithm's output to the point of being unusable. This is especially true for OCR algorithms which assume constant width, spacing, and more within a document.
+
+An ideal solution would leverage automated transcription for the undamaged portions, and allow a human reader to fill in any gaps. I refer to this as semi-automated transcription. This project presents a pipeline for semi-automated transcription, blending the unreplicable abilities of the human eye with the efficiency and scalability of character recognition algorithms.
+
+
 \section{Project Components}
 There are two main components of the project. The first is a semi-supervised machine learning approach to document transcription, and the second is a word tracing tool for textual scholarship.
 
 \subsection{An Interactive Approach to Automated Transcription}
-Automated transcription is ideal and sometimes necessary for larger datasets of handwritten documents. Automated transcription for printed documents as well as handwritten documents is now on par with human performance. However, damaged historical documents present unique challenges.
+In this implementation, a user first labels words or letters in the document, generating a small training set for a neural network. A trained neural network will traverse all pages of the document, recognizing occurrences of any word in its training set. If the network finds no words within an area, it documents the location as "unknown" within its output, so that a user studying the transcript can revisit the area and provide a label if possible.
 
-I develop the following approach: given a small set of labeled samples, train a neural network in a semi-supervised manner using both labeled and non-labeled data. Once the initial model is trained, use it to create a transcription of the full document. During the transcription process, the model keeps track of difficult word images, prioritizing them for manual labeling afterwards.
+Given a small set of labeled samples, train a neural network in a semi-supervised manner using both labeled and non-labeled data. Once the initial model is trained, use it to create a transcription of the full document. During the transcription process, the model keeps track of difficult word images, prioritizing them for manual labeling afterwards.
 
 \subsection{Word Tracing}
 Once the transcription of a document is generated, many scholars wish to trace the outputted text back to the original manuscript image. Building on state-of-the-art word spotting techniques, I implement a tool that traces transcript text back to the original input image so that scholars can easily navigate and visualize transcriptions.
+
+
+
+\section{Related Work}
+\subsection{Handwriting Recognition}
+
+\subsection{Computer Vision Techniques for Text Recognition}
+
+\subsection{Hybrid Approaches}
+
+
 
 \section{Literature Review}
 \subsection{2009}
@@ -84,6 +105,8 @@ Once the transcription of a document is generated, many scholars wish to trace t
 \item SpottingNet: Learning the Similarity of Word Images with Convolutional Neural Network for Word Spotting in Handwritten Historical Documents \cite{zhong2016spottingnet}.
 \end{itemize}
 
+
+
 \subsection{Surveys}
 \begin{itemize}
 \item A survey of document image word spotting techniques \cite{giotis2017survey}.
@@ -91,6 +114,19 @@ Once the transcription of a document is generated, many scholars wish to trace t
 \item A survey on handwritten documents word spotting \cite{ahmed2017survey}.
 \end{itemize}
 \copyrightnotice
+
+
+
+
+
+\chapter{Methodology}
+\section{Data Input and Preprocessing}
+\subsection{Alignment}
+\subsection{Segmentation}
+
+
+\section{Labeling}
+
 
 \chapter{The First Chapter}
 \section{The First Section}
