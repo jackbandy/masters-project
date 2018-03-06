@@ -13,10 +13,26 @@ import os
 import matplotlib.pyplot as plt
 
 
+def loadRawImage(file_path):
+    try:
+        im = imageio.imread(file_path)
+        return np.array(im)
+    except:
+        print("Unable to read image at {}".format(file_path))
+        return None
+   
+
+
+def invertImage(im):
+    p_im = PIL.Image.fromarray(im).convert('L')
+    invert = PIL.ImageOps.invert(p_im)
+    return np.array(invert)
+
+
+
 def loadImage(file_path):
     try:
-        raw_im = misc.imread(file_path)
-        im = misc.imread(file_path, flatten=True)
+        im = imageio.imread(file_path)
         p_im = PIL.Image.fromarray(im).convert('L')
         invert = PIL.ImageOps.invert(p_im)
         return np.array(invert)
@@ -24,6 +40,7 @@ def loadImage(file_path):
         print("Unable to read image at {}".format(file_path))
         return None
     
+
 
 def preProcessImages(images):
     to_return = []
@@ -47,7 +64,7 @@ def removeBackground(image):
     image_array = np.array(image)
     hist, bin_edges = np.histogram(image_array, bins='auto')
     # choose the bin edge (shortcut)
-    halfway = int(bin_edges.shape[0] * .7)
+    halfway = int(bin_edges.shape[0] * .6)
     threshold = bin_edges[halfway]
     no_background_image = np.where(image > threshold, image, 0)
 

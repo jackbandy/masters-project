@@ -14,37 +14,18 @@ import util
 
 
 def main():
-    image_path = 'data/page-1-full.gif'
-    page_image, raw_image = util.loadImage(image_path)
+    image_path = 'data/sample_pages/Wycliffe-005-001r-2010.jpg'
+    page_image = util.loadImage(image_path)
     binary_image = util.removeBackground(page_image)
-
 
     line_locations = getHorizontalLines(binary_image)
     all_word_locations = []
     plt.imshow(binary_image,cmap='gray')
-    #for i in range(len(line_locations) - 1):
-    current_word = 82
-    for i in range(12,45):
+    for i in range(len(line_locations) -1):
         # plot the horizontal line
         print("Working on line {}".format(i))
         plt.plot((0, binary_image.shape[1]), (line_locations[i],
             line_locations[i]), 'w-')
-        
-        line_image = raw_image[line_locations[i]:line_locations[i+1]]
-        binary_line_image = binary_image[line_locations[i]:line_locations[i+1]]
-        endpt = findEnd(binary_line_image)
-        left = 75
-        for x in starts[i]:
-            plt.plot((x,x), (line_locations[i], line_locations[i+1]), 'r-')
-            imageio.imwrite('data/new_samples/unknown-{}.gif'.format(current_word),
-                    line_image[:,left:x])
-            current_word += 1
-            left = x
-        plt.plot((endpt,endpt), (line_locations[i], line_locations[i+1]), 'r-')
-        print("endpoint word line {}: {}:{}/{}".format(i, left, endpt, line_image.shape[1]))
-        imageio.imwrite('data/new_samples/unknown-{}.gif'.format(current_word),
-                    line_image[:,starts[i][-1]:endpt])
-        current_word += 1
 
     plt.plot((0, binary_image.shape[1]), (line_locations[-1],
             line_locations[-1]), 'w-')
@@ -149,57 +130,6 @@ def getHorizontalLines(image):
     line_locations[-1] = 4560
     return line_locations
 
-
-
-wpl = [7, 8, 4, 5, 8, 7, 6, 6, 8, 8, 8, 8, 6, 6, 7, 6, 6, 7, 8, 6, 6, 6, 6, 7, 6, 6, 7, 8, 7, 6, 7, 5, 6, 6, 7, 9, 7, 8, 8, 6, 8, 8, 10, 8, 8]
-
-starts = [
-[],
-[],
-[],
-[],
-[],
-[],
-[],
-[],
-[],
-[],
-[],
-[],
-[300,600,850,1080,1340],
-[220,380,615,990,1370],
-[285,520,720,940,1140,1370],
-[370,600,830,1070,1300],
-[330,560,930,1320,1545],
-[260,510,740,970,1180,1400],
-[220,330,490,750,850,950,1060],
-[180,560,720,940,1070],
-[170,550,860,1090,1390],
-[220,430,810,1200,1430],
-[330,570,920,1260,1490],
-[200,380,615,870,1170,1360],
-[350,590,800,1030,1260],
-[350,580,900,1230,1470],
-[210,450,670,930,1050,1470],
-[360,490,750,890,1070,1320,1490],
-[320,510,690,780,960,1420],
-[440,530,760,930,1275],
-[250,410,610,830,940,1050],
-[185,580,780,1150],
-[235,460,570,1180,1290],
-[170,370,550,920,1450],
-[195,620,725,905,1100,1300],
-[330,445,670,775,910,1100,1390,1495],
-[275,540,670,920,1260,1435],
-[380,720,830,950,1150,1360,1450],
-[385,530,790,920,1300,1430],
-[250,480,560,795,950,1340],
-[205,440,740,960,1170,1300,1470],
-[170,280,620,820,1135,1210,1340],
-[180,300,470,810,900,1110,1210,1315,1390],
-[330,470,660,770,1060,1245,1400],
-[180,400,660,760,970,1110,1280],
-]
 
 if __name__ == "__main__":
     main()
