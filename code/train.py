@@ -14,15 +14,24 @@ from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 import matplotlib.pyplot as plt
 import util, cluster
 
-EPOCHS = 10
-N_CLUSTERS = 1500
+EPOCHS = [10]
+N_CLUSTERS = [1500,2000]
+NEURON_COUNT = [16,24]
 
-training_samples_path = '../gw-data/data/word_images_normalized/'
-vae_save_path = 'vae_encoder_{}epochs.h5'.format(EPOCHS)
-kmeans_save_path = 'kmeans_{}epochs_{}clusters.sav'.format(EPOCHS, N_CLUSTERS)
 
 
 def main():
+    for ep in EPOCHS:
+        for cl in N_CLUSTERS:
+            for nc in NEURON_COUNT:
+                run_instance(ep, cl, nc)
+
+
+def run_instance(epochs, n_clusters, neuron_count):
+    training_samples_path = '../gw-data/data/word_images_normalized/'
+    vae_save_path = 'vae_encoder_{}epochs.h5'.format(epochs)
+    kmeans_save_path = 'kmeans_{}epochs_{}clusters.sav'.format(epochs, n_clusters)
+
     # step 1: load in the samples
     training_images, im_height, im_width =util.collectSamples(training_samples_path, binarize=False, invert=False)
     n_samples = training_images.shape[0]
@@ -32,32 +41,18 @@ def main():
     print("Collected {} images...".format(n_samples))
 
     # step 2: build the model
-    vae = buildNetwork(input_height=im_height, input_width=im_width)
+    vae = buildNetwork(input_height=im_height, input_width=im_width, neurons=[neuron_count]*4)
     vae.compile(optimizer='adadelta',loss='binary_crossentropy')
     vae.fit(training_images, training_images,
-            epochs=EPOCHS,
+            epochs=epochs,
             batch_size=10,
             shuffle=True,
             validation_data=(training_images, training_images),
     )
             
 
-    # step 3: cluster
+    # step 3: visualize results
     predict_images = np.random.permutation(training_images)
-    intermediate_layer_model = Model(inputs=vae.input, outputs=vae.layers[8].output)
-    intermediate_layer_model.save(vae_save_path)
-    encoded = intermediate_layer_model.predict(predict_images)
-    encoded = np.reshape(encoded, (encoded.shape[0], -1))
-    kmeans = cluster.createNClusters(encoded, N_CLUSTERS)
-
-    labels = kmeans.predict(encoded)
-    util.saveImagesWithLabels(images=predict_images, labels=labels,
-                                directory='test-labels')
-    cluster.saveClusters(centroids=kmeans.cluster_centers_)
-    cluster.saveClusterer(model=kmeans, file_path=kmeans_save_path)
-   
-
-    # step 4: visualize results
     output_ims = vae.predict(predict_images)
     n = 5
     plt.figure(figsize=(8,4))
@@ -70,8 +65,25 @@ def main():
         ax = plt.subplot(2, n, i+n+1)
         plt.imshow(output_ims[i].reshape(im_height, im_width))
         plt.gray()
-    plt.show()
-    exit()
+    plt.savefig('results-{}epochs-{}clusters-{}neurons.png'.format(epochs, n_clusters, neuron_count))
+    plt.clf()
+
+    # step 4: cluster
+    intermediate_layer_model = Model(inputs=vae.input, outputs=vae.layers[8].output)
+    intermediate_layer_model.save(vae_save_path)
+    encoded = intermediate_layer_model.predict(predict_images)
+    encoded = np.reshape(encoded, (encoded.shape[0], -1))
+
+    #kmeans = cluster.createNClusters(encoded, n_clusters)
+    #labels = kmeans.predict(encoded)
+
+    labels = cluster.predictAgglomNClusters(encoded, n_clusters)
+
+    util.saveImagesWithLabels(images=predict_images, labels=labels,
+                                directory='test-labels')
+    cluster.saveClusters(centroids=kmeans.cluster_centers_)
+    cluster.saveClusterer(model=kmeans, file_path=kmeans_save_path)
+   
 
 
 
@@ -115,8 +127,7 @@ def collectSamples(directory):
 
 
 
-def buildNetwork(input_height, input_width):
-    neurons = [8, 8, 16, 16]
+def buildNetwork(input_height, input_width, neurons):
     input_img = Input(shape=(input_height, input_width, 1))
     x = Conv2D(neurons[0], (3, 3), activation='relu', padding='same')(input_img)
     x = MaxPooling2D((2, 2), padding='same')(x)
