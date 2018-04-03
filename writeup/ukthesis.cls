@@ -468,11 +468,13 @@
 \if@pretty\relax\else%this gives the grad school required frontmatter
 \renewcommand{\maketitle}{
   \begin{titlingpage}
-  \makeabcoverpage
-  \makeabtitlepage
-  \makeabstractpage
+  
+  % commented out to remove abstract stuff
+  %\makeabcoverpage
+  %\makeabtitlepage
+  %\makeabstractpage
+  
   \makeapprovalpage
-  \makerulespage
   \makecoverpage
   \maketitlepage
   \end{titlingpage}
