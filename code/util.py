@@ -30,12 +30,15 @@ def invertImage(im):
 
 
 
-def loadImage(file_path):
+def loadImage(file_path, invert=True):
     try:
         im = imageio.imread(file_path)
         p_im = PIL.Image.fromarray(im).convert('L')
-        invert = PIL.ImageOps.invert(p_im)
-        return np.array(invert)
+        if invert:
+            inverted = PIL.ImageOps.invert(p_im)
+            return np.array(inverted)
+        else:
+            return np.array(p_im)
     except:
         print("Unable to read image at {}".format(file_path))
         return None
@@ -87,7 +90,7 @@ def saveImagesWithLabels(images, labels, directory='predictions'):
 
 
 
-def collectSamples(directory, invert=False, binarize=True):
+def collectSamples(directory, invert=True, binarize=True):
     file_names = os.listdir(directory)
     file_names.sort()
     images = []
@@ -97,14 +100,11 @@ def collectSamples(directory, invert=False, binarize=True):
     # first loop put all images in python list
     print("Collecing image files...")
     for f in file_names:
-        im = loadImage(directory + '/' + f)
+        im = loadImage(directory + '/' + f, invert=invert)
         if im is None:
             continue
         if binarize:
             im = removeBackground(im)
-        if invert:
-            print("Inverting...")
-            im = invertImage(im)
         images.append(im)
         if im.shape[0] > max_height:
             max_height = im.shape[0]

@@ -6,7 +6,7 @@ Run this script to automatically add ground-truth labels to the database
 import tkinter as tk
 import os
 import numpy as np
-from PIL import Image, ImageTk
+from PIL import Image 
 import nltk
 import util, cluster
 from keras.models import load_model
@@ -14,16 +14,18 @@ from sklearn.metrics import accuracy_score
 
 
 images_path = '../gw-data/data/word_images_normalized/'
-model_path = 'vae_encoder_3epochs.h5'
+model_path = 'vae_encoder_20epochs_8neurons.h5'
 cluster_path = 'labeled_clusters.npy'
 #clusterer_path = 'kmeans_50epochs_50clusters.sav'
-clusterer_path = 'kmeans_3epochs_1500clusters.sav'
+clusterer_path = 'kmeans_20epochs_2200clusters.sav'
 ground_truth_path = '../gw-data/ground_truth/just_words.txt'
 
 
 def main():
     # initialization
-    samples, height, width = util.collectSamples(images_path)
+    samples, height, width = util.collectSamples(images_path, binarize=False)
+    white_val = np.max(samples)
+    samples = samples / white_val
     clusterer = cluster.loadClusterer(clusterer_path)
     n_clusters = clusterer.cluster_centers_.shape[0]
     cluster_labels = [''] * n_clusters
@@ -60,7 +62,7 @@ def main():
 
 def encodeImages(encoder, input_images, im_height, im_width):
     input_images = input_images.reshape(input_images.shape[0], im_height, im_width,
-            1) / 255.
+            1) 
     encoded = encoder.predict(input_images)
     encoded = np.reshape(encoded, (encoded.shape[0], -1))
     return encoded

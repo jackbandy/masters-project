@@ -15,35 +15,36 @@ import matplotlib.pyplot as plt
 import util, cluster
 import imageio
 
-EPOCHS = [3]
-N_CLUSTERS = [1500]
-NEURON_COUNT = [16]
+EPOCHS = [20]
+N_CLUSTERS = [1800,2000,2200]
+NEURON_COUNT = [8,16]
 
 
 
 def main():
     for ep in EPOCHS:
-        for cl in N_CLUSTERS:
-            for nc in NEURON_COUNT:
-                run_instance(ep, cl, nc)
+        for nc in NEURON_COUNT:
+            run_instance(ep, N_CLUSTERS, nc)
 
 
-def run_instance(epochs, n_clusters, neuron_count):
+def run_instance(epochs, N_CLUSTERS, neuron_count):
     training_samples_path = '../gw-data/data/word_images_normalized/'
     vae_save_path = 'vae_encoder_{}epochs.h5'.format(epochs)
-    kmeans_save_path = 'kmeans_{}epochs_{}clusters.sav'.format(epochs, n_clusters)
 
     # step 1: load in the samples
-    training_images, im_height, im_width =util.collectSamples(training_samples_path, binarize=False, invert=False)
+    training_images, im_height, im_width =util.collectSamples(training_samples_path, binarize=False, invert=True)
     n_samples = training_images.shape[0]
+    white_val = np.max(training_images)
+    print("White value is {}".format(white_val))
     training_images = training_images.reshape(n_samples, im_height, im_width,
-            1) / 255.
+            1) / white_val
 
     print("Collected {} images...".format(n_samples))
 
     # step 2: build and train the model
     print("Training network...")
-    vae = buildNetwork(input_height=im_height, input_width=im_width, neurons=[neuron_count]*4)
+    neuron_array = [4,4,8,neuron_count]
+    vae = buildNetwork(input_height=im_height, input_width=im_width, neurons=neuron_array)
     vae.compile(optimizer='adadelta',loss='binary_crossentropy')
     vae.fit(training_images, training_images,
             epochs=epochs,
@@ -59,15 +60,15 @@ def run_instance(epochs, n_clusters, neuron_count):
     output_ims = vae.predict(predict_images)
     n = 10
     #plt.figure(figsize=(8,4))
+    instance_dir = 'results-{}epochs-{}neurons'.format(epochs, neuron_count)
+    os.mkdir(instance_dir)
     for i in range(n):
         # original
         #ax = plt.subplot(2, n, i+1)
         #plt.imshow(predict_images[i].reshape(im_height, im_width))
         #plt.gray()
-        imageio.imwrite('results{}-raw-{}epochs-{}clusters-{}neurons.png'.format(
-            i,epochs, n_clusters, neuron_count), predict_images[i])
-        imageio.imwrite('results{}-rec-{}epochs-{}clusters-{}neurons.png'.format(
-            i,epochs, n_clusters, neuron_count), output_ims[i])
+        imageio.imwrite(instance_dir+'/{}-raw.png'.format(i), predict_images[i])
+        imageio.imwrite(instance_dir+'/{}-rec.png'.format(i), output_ims[i])
         #ax = plt.subplot(2, n, i+n+1)
         #plt.imshow(output_ims[i].reshape(im_height, im_width))
         #plt.gray()
@@ -82,16 +83,17 @@ def run_instance(epochs, n_clusters, neuron_count):
     encoded = intermediate_layer_model.predict(predict_images)
     encoded = np.reshape(encoded, (encoded.shape[0], -1))
 
-    kmeans = cluster.createNClusters(encoded, n_clusters)
-    labels = kmeans.predict(encoded)
+    for n_clusters in N_CLUSTERS:
+        kmeans_save_path = 'kmeans_{}epochs_{}clusters.sav'.format(epochs, n_clusters)
+        kmeans = cluster.createNClusters(encoded, n_clusters)
+        labels = kmeans.predict(encoded)
 
-    #labels = cluster.predictAgglomNClusters(encoded, n_clusters)
+        #labels = cluster.predictAgglomNClusters(encoded, n_clusters)
 
-    util.saveImagesWithLabels(images=predict_images, labels=labels,
-                                directory='test-labels')
-    cluster.saveClusters(centroids=kmeans.cluster_centers_)
-    cluster.saveClusterer(model=kmeans, file_path=kmeans_save_path)
-   
+        #util.saveImagesWithLabels(images=predict_images, labels=labels,directory='test-labels')
+        cluster.saveClusters(centroids=kmeans.cluster_centers_)
+        cluster.saveClusterer(model=kmeans, file_path=kmeans_save_path)
+       
 
 
 
