@@ -14,10 +14,10 @@ from sklearn.metrics import accuracy_score
 
 
 images_path = '../gw-data/data/word_images_normalized/'
-model_path = 'vae_encoder_50epochs.h5'
+model_path = 'vae_encoder_3epochs.h5'
 cluster_path = 'labeled_clusters.npy'
 #clusterer_path = 'kmeans_50epochs_50clusters.sav'
-clusterer_path = 'kmeans_50epochs_50clusters.sav'
+clusterer_path = 'kmeans_3epochs_1500clusters.sav'
 ground_truth_path = '../gw-data/ground_truth/just_words.txt'
 
 

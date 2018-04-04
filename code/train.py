@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 import util, cluster
 import imageio
 
-EPOCHS = [2]
-N_CLUSTERS = [1500,2000]
-NEURON_COUNT = [16,24]
+EPOCHS = [3]
+N_CLUSTERS = [1500]
+NEURON_COUNT = [16]
 
 
 
