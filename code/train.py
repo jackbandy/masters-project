@@ -13,8 +13,9 @@ from keras.models import Model
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 import matplotlib.pyplot as plt
 import util, cluster
+import imageio
 
-EPOCHS = [10]
+EPOCHS = [2]
 N_CLUSTERS = [1500,2000]
 NEURON_COUNT = [16,24]
 
@@ -40,7 +41,8 @@ def run_instance(epochs, n_clusters, neuron_count):
 
     print("Collected {} images...".format(n_samples))
 
-    # step 2: build the model
+    # step 2: build and train the model
+    print("Training network...")
     vae = buildNetwork(input_height=im_height, input_width=im_width, neurons=[neuron_count]*4)
     vae.compile(optimizer='adadelta',loss='binary_crossentropy')
     vae.fit(training_images, training_images,
@@ -52,32 +54,38 @@ def run_instance(epochs, n_clusters, neuron_count):
             
 
     # step 3: visualize results
+    print("Saving results from vae...")
     predict_images = np.random.permutation(training_images)
     output_ims = vae.predict(predict_images)
-    n = 5
-    plt.figure(figsize=(8,4))
+    n = 10
+    #plt.figure(figsize=(8,4))
     for i in range(n):
         # original
-        ax = plt.subplot(2, n, i+1)
-        plt.imshow(predict_images[i].reshape(im_height, im_width))
-        plt.gray()
+        #ax = plt.subplot(2, n, i+1)
+        #plt.imshow(predict_images[i].reshape(im_height, im_width))
+        #plt.gray()
+        imageio.imwrite('results{}-raw-{}epochs-{}clusters-{}neurons.png'.format(
+            i,epochs, n_clusters, neuron_count), predict_images[i])
+        imageio.imwrite('results{}-rec-{}epochs-{}clusters-{}neurons.png'.format(
+            i,epochs, n_clusters, neuron_count), output_ims[i])
+        #ax = plt.subplot(2, n, i+n+1)
+        #plt.imshow(output_ims[i].reshape(im_height, im_width))
+        #plt.gray()
+    #plt.savefig('results-{}epochs-{}clusters-{}neurons.png'.format(epochs, n_clusters, neuron_count))
+    #plt.clf()
 
-        ax = plt.subplot(2, n, i+n+1)
-        plt.imshow(output_ims[i].reshape(im_height, im_width))
-        plt.gray()
-    plt.savefig('results-{}epochs-{}clusters-{}neurons.png'.format(epochs, n_clusters, neuron_count))
-    plt.clf()
 
     # step 4: cluster
+    print("Building a cluster model...")
     intermediate_layer_model = Model(inputs=vae.input, outputs=vae.layers[8].output)
     intermediate_layer_model.save(vae_save_path)
     encoded = intermediate_layer_model.predict(predict_images)
     encoded = np.reshape(encoded, (encoded.shape[0], -1))
 
-    #kmeans = cluster.createNClusters(encoded, n_clusters)
-    #labels = kmeans.predict(encoded)
+    kmeans = cluster.createNClusters(encoded, n_clusters)
+    labels = kmeans.predict(encoded)
 
-    labels = cluster.predictAgglomNClusters(encoded, n_clusters)
+    #labels = cluster.predictAgglomNClusters(encoded, n_clusters)
 
     util.saveImagesWithLabels(images=predict_images, labels=labels,
                                 directory='test-labels')
@@ -85,45 +93,6 @@ def run_instance(epochs, n_clusters, neuron_count):
     cluster.saveClusterer(model=kmeans, file_path=kmeans_save_path)
    
 
-
-
-def collectSamples(directory):
-    file_names = os.listdir(directory)
-    images = []
-    max_height = 0
-    max_width = 0
-
-    # first loop put all images in python list
-    print("Collecing image files...")
-    for f in file_names:
-        inverted = util.loadImage(directory + '/' + f)
-        if inverted is None:
-            continue
-        binarized = util.removeBackground(inverted)
-        images.append(binarized)
-        if binarized.shape[0] > max_height:
-            max_height = binarized.shape[0]
-        if binarized.shape[1] > max_width:
-            max_width = binarized.shape[1]
-            
-    print("OLD max_width is {}, max_height is {}".format(max_width, max_height))
-    while max_width % 16 != 0:
-        max_width += 1
-    while max_height % 16 != 0:
-        max_height += 1
-    print("NEW max_width is {}, max_height is {}".format(max_width, max_height))
-
-    # second loop: center all images in a numpy array
-    all_images = np.zeros((len(images), max_height, max_width),
-            dtype=np.float32)
-    print("Organizing image samples...")
-    for i in range(len(images)):
-        im = images[i]
-        top = int((max_height - im.shape[0]) / 2)
-        left = int((max_width - im.shape[1]) / 2)
-        all_images[i, top:top+im.shape[0], left:left+im.shape[1]] = im
-
-    return all_images, max_height, max_width
 
 
 
