@@ -11,6 +11,8 @@
             letterpaper,
             bookmarksnumbered=true]{hyperref}
 \usepackage{memhfixc}
+\usepackage{graphicx}
+\graphicspath{{./figures/}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 %author data
@@ -36,10 +38,10 @@ Acknowledge people/things here
 %%
 %
 %
-% Background Chapter
+% Introduction Chapter
 %
 %%
-\chapter{Background}
+\chapter{Introduction}
 
 
 %
@@ -85,7 +87,7 @@ By the time ensemble HMMs came onto the scene, neural networks were already pene
 
 More recently, convolutional neural networks (CNNs) have become the state-of-the-art approach for text recognition on handwritten documents \cite{zhong2016spottingnet,sudholt2016phocnet}. Many of these approaches overlap text recognition methods mentioned in the previous section, and in fact, recent neural networks are designed to recognize both printed text and handwritten text.
 
-
+% Highly relavant stuff
 \subsection{Word Spotting on Damaged Handwritten Documents}
 In this section, the scope of related projects is narrowed down from all handwriting recognition systems, and I examine research related to word spotting on historical documents.
 
@@ -94,7 +96,9 @@ As previously mentioned, \cite{rath2007word} formalized the idea of wordspotting
 
 
 
-
+%
+% Motivation
+%
 \section{Motivation}
 On the surface, optical character recognition, word recognition, and handwriting recognition appear to be solved problems. As detailed in the previous section, the explosion of machine learning research in recent years has led to drastic improvements in performance on these tasks, and many advancements have even found their way to consumer products. For example, everyday software allows users to search within scans or photographs of printed typeface, and note-taking software can now interpret penmanship that would be indecipherable to many human readers.
 
@@ -104,69 +108,85 @@ While fully manual transcription is the most accurate solution, it is incredibly
 
 A fully automated transcription algorithm may successfully transcribe certain portions of a historical document, but the damaged portions can distort the algorithm's output to the point of being unusable. This is especially true in cases where letters are literally missing. This is especially true for OCR algorithms which assume constant width, spacing, and more within a document.
 
-An ideal solution would leverage automated transcription for the undamaged portions, and allow a human reader to fill in any gaps. I refer to this as semi-automated transcription. This project presents a pipeline for semi-automated transcription, blending the irreplicable abilities of the human eye with the efficiency and scalability of character recognition algorithms.
+An ideal solution would leverage automated transcription for the undamaged portions, and allow a human reader to fill in any gaps. A framework for this hybrid approach is presented in \cite{schaekermann2016resolvable}, which also provides an elegant schematic of the approach in Figure \ref{fig:hcml-schematic}.
 
 
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=14cm]{hcml-schematic}
+\end{center}
+\caption{A schematic diagram from \cite{schaekermann2016resolvable} for semi-automated transcription. This  framework is designed especially for resolving ambiguity, which is not the focus of my project. Nonetheless, this diagram depicts a collaborative framework betwee machine learning and human annotation.}
+\label{fig:hcml-schematic}
+\end{figure}
+
+I refer to this as semi-automated transcription. This project presents a pipeline for semi-automated transcription, blending the irreplicable abilities of the human eye with the efficiency and scalability of character recognition algorithms.
+
+
+
+%
+% Motivation
+%
 \section{Contributions}
+The methods used in this project borrow heavily from methods in the aforementioned research areas, including keyword and character spotting \cite{sharma2015adapting,frinken2012novel}, word recognition \cite{howe2009finding}, and handwriting recognition \cite{fischer2013fast,bluche2013feature}.
 
-\subsection{An Interactive Approach to Automated Transcription}
-In this implementation, a user first labels words or letters in the document, generating a small training set for a neural network. A trained neural network will traverse all pages of the document, recognizing occurrences of any word in its training set. If the network finds no words within an area, it documents the location as "unknown" within its output, so that a user studying the transcript can revisit the area and provide a label if possible.
+Nonetheless, this project makes two notable contributions to the area of handwritten text recognition, both concerned with the challenges of damaged words. First, a framework for semi-automated transcription is detailed and implemented, in which damaged words could be labeled by an expert and seamlessly integrated into an otherwise automated word spotting process. The second contribution is an approach for virtually restoring damaged or low-quality words into a representation that could be recognized automatically.
 
-Given a small set of labeled samples, train a neural network in a semi-supervised manner using both labeled and non-labeled data. Once the initial model is trained, use it to create a transcription of the full document. During the transcription process, the model keeps track of difficult word images, prioritizing them for manual labeling afterwards.
+
+\subsection{An Interactive Approach to Word Spotting}
+A semi-automated approach to word spotting utilizes user-provided labels of words in a given document. Essentially, a group of users generate a training set, which allows the system to recognize most occurrences of a given word in the training set. If a distorted occurrence of the word exists, the system will leave it unlabeled and leave the word image in the pool of images to be labeled by users.
+
 
 \subsection{A Technique for Virtual Ink Restoration}
-The methods used in this paper come from a variety of these related tasks, including keyword and character spotting \cite{sharma2015adapting,frinken2012novel}, word recognition \cite{howe2009finding}, and handwriting recognition \cite{fischer2013fast,bluche2013feature}.
+Several techniques .
 
 
 
 
-\section{Literature Review}
-\subsection{2009}
-\begin{itemize}
-\item Finding words in alphabet soup: Inference on freeform character recognition for historical scripts \cite{howe2009finding}.
-\end{itemize}
+%\section{Literature Review}
+%\subsection{2009}
+%\begin{itemize}
+%\item Finding words in alphabet soup: Inference on freeform character recognition for historical scripts \cite{howe2009finding}.
+%\end{itemize}
+%
+%\subsection{2012}
+%\begin{itemize}
+%\item A novel word spotting method based on recurrent neural networks \cite{frinken2012novel}.
+%\item End-to-end text recognition with convolutional neural networks \cite{wang2012end}.
+%\end{itemize}
+%
+%\subsection{2013}
+%\begin{itemize}
+%\item Handwritten word recognition using mlp based classifier: A holistic approach \cite{acharyya2013handwritten}.
+%\item Feature extraction with convolutional neural networks for handwritten word recognition \cite{bluche2013feature}.
+%\end{itemize}
+%
+%\subsection{2014}
+%\begin{itemize}
+%\item A combined system for text line extraction and handwriting recognition in historical documents \cite{fischer2014combined}
+%\end{itemize}
+%
+%\subsection{2015}
+%\begin{itemize}
+%\item Efficient segmentation-free keyword spotting in historical document collections \cite{rusinol2015efficient}.
+%\item Adapting off-the-shelf cnns for word spotting \& recognition \cite{sharma2015adapting}.
+%\item Segmentation-free handwritten Chinese text recognition with LSTM-RNN \cite{messina2015segmentation}.
+%\end{itemize}
+%
+%\subsection{2016}
+%\begin{itemize}
+%\item On the Benefits of Convolutional Neural Network Combinations in Offline Handwriting Recognition \cite{suryani2016benefits}.
+%\item Reading text in the wild with convolutional neural networks \cite{jaderberg2016reading}.
+%\item PHOCNet: A deep convolutional neural network for word spotting in handwritten documents \cite{sudholt2016phocnet}.
+%\item SpottingNet: Learning the Similarity of Word Images with Convolutional Neural Network for Word Spotting in Handwritten Historical Documents \cite{zhong2016spottingnet}.
+%\end{itemize}
+%
+%\subsection{Surveys}
+%\begin{itemize}
+%\item A survey of document image word spotting techniques \cite{giotis2017survey}.
+%
+%\item A survey on handwritten documents word spotting \cite{ahmed2017survey}.
+%\end{itemize}
 
-\subsection{2012}
-\begin{itemize}
-\item A novel word spotting method based on recurrent neural networks \cite{frinken2012novel}.
-\item End-to-end text recognition with convolutional neural networks \cite{wang2012end}.
-\end{itemize}
-
-\subsection{2013}
-\begin{itemize}
-\item Handwritten word recognition using mlp based classifier: A holistic approach \cite{acharyya2013handwritten}.
-\item Feature extraction with convolutional neural networks for handwritten word recognition \cite{bluche2013feature}.
-\end{itemize}
-
-\subsection{2014}
-\begin{itemize}
-\item A combined system for text line extraction and handwriting recognition in historical documents \cite{fischer2014combined}
-\end{itemize}
-
-\subsection{2015}
-\begin{itemize}
-\item Efficient segmentation-free keyword spotting in historical document collections \cite{rusinol2015efficient}.
-\item Adapting off-the-shelf cnns for word spotting \& recognition \cite{sharma2015adapting}.
-\item Segmentation-free handwritten Chinese text recognition with LSTM-RNN \cite{messina2015segmentation}.
-\end{itemize}
-
-\subsection{2016}
-\begin{itemize}
-\item On the Benefits of Convolutional Neural Network Combinations in Offline Handwriting Recognition \cite{suryani2016benefits}.
-\item Reading text in the wild with convolutional neural networks \cite{jaderberg2016reading}.
-\item PHOCNet: A deep convolutional neural network for word spotting in handwritten documents \cite{sudholt2016phocnet}.
-\item SpottingNet: Learning the Similarity of Word Images with Convolutional Neural Network for Word Spotting in Handwritten Historical Documents \cite{zhong2016spottingnet}.
-\end{itemize}
-
-
-
-\subsection{Surveys}
-\begin{itemize}
-\item A survey of document image word spotting techniques \cite{giotis2017survey}.
-
-\item A survey on handwritten documents word spotting \cite{ahmed2017survey}.
-\end{itemize}
-\copyrightnotice
 
 
 
@@ -178,52 +198,79 @@ The methods used in this paper come from a variety of these related tasks, inclu
 %
 %%
 \chapter{Methodology}
-\section{Data}
-\subsection{George Washington Dataset}
-\subsection{Wycliffe Dataset}
 
+
+%
+% Motivation
+%
 \section{Preprocessing}
+For the George Washington dataset, segmented and binarized word images are already provided. For the Wycliffe dataset, several preprocessing steps must be taken to get from raw images of the manuscript to segmented, binarized word images suitable for word spotting. 
+
 \subsection{Alignment}
-Rotation, etc.
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=14cm]{rotate-crop}
+\end{center}
+\caption{A sample of the original photographs of the Wycliffe New Testament Manuscript. In the preprocessing phase, these images must be aligned and cropped into separate columns.}
+\label{fig:rotate-crop}
+\end{figure}
+The first step, visualized in figure \ref{fig:rotate-crop}, involves rotating the original photographs so that text columns are vertically aligned. Rotation varies depending on where the page existed in the binding and which side of the book it was on.
+
+Columns were cropped identically on each page, based on the assumption that more precise segmentation would take place in the line segmentation and word segmentation algorithms. The key in column cropping is to create images that only contain text from one column. The amount of margin outside the column need not be precise, however, to allow for key assumptions in the binarization phase, it must not contain anything besides paper.
+
 
 \subsection{Binarization}
-Once the word images are segmented, the RGB image is flattened into a single grayscale channel. The image is then inverted so that the text is white and the background dark gray. To remove the gray background, a two-bin histogram is generated that heuristically determines a natural boundary between the background and foreground values. Each pixel below this boundary is set to black. FIGURE. Lastly, to deal with the varying width and height of words, each image is centered inside a canvas before being fed to the network.
+Once the column images are cropped, the RGB image is flattened into a single grayscale channel. The image is then inverted so that the text is white and the background dark gray. To remove the gray background, the system uses a thresholding algorithm implemented by OpenCV \cite{bradski2000opencv}. Because lighting and coloring varies across manuscript pages, a global threshold would lead to noisy and inconsistent background removal. Instead, a threshold should be calculated individually for each page.
+
+Because the column image is assumed to only contain ink and paper, a histogram of values in the column image should be bimodal (the two peaks representing the approximate value of an ink pixel and a paper pixel). Otsu's binarization algorithm \cite{otsu1979threshold} takes advantage of this bimodal distribution. It works by choosing a threshold value in between the two peaks that minimizes the variance within the two ``classes,'' an ideal method for these manuscript pages.
 
 
 \subsection{Segmentation}
-To preserve the possibility of crowdsourcing the labeling task for images of individual words, each step in the pipeline assumes the document page has been segmented into words. This makes for simpler machine learning mechanisms, but adds the step of segmenting the manuscript image into individual words.
+After column images are binarized, the next step is to split the column into its individual lines and words.
 
-Because the Wycliffe New Testament is aligned and spaced so consistently, the segmentation for this project involved plotting a vertical projection profile of a page image to determine the location of individual lines of text. To segment the line of text into individual words, in this case, a simple threshold on the horizontal projection profile provided sufficient accuracy. Because of the alignment, the intensity vector across the line had consistent valleys at the spaces in between each word.
-
-
-
-\section{Training and Clustering}
-
-\subsection{Variational Autoencoder}
-The purpose of the VAE is to learn an encoded representation of the word images without the need for ground truth label. The VAE trains by encoding its input then attempting to recreate it using the decoder. Backwards propagation of error occurs based on how similar the decoded image is to the original input image. Thus, a successful encoding allows the decoder to accurately recreate the input image. This process is visualized in figure \ref{fig:vaedemo}.
+The Wycliffe New Testament is aligned and spaced with remarkable consistency. So, the segmentation involved plotting a vertical projection profile of a page image to determine the location of individual lines of text. To segment the line of text into individual words, in this case, a simple threshold on the horizontal projection profile provided sufficient accuracy. Because of the alignment, the intensity vector across the line had consistent valleys at the spaces in between each word.
 
 
-Figure blank showsThe experiment used two different architectures to determine the effect of expanding or contracting the size of the encoded layer, both were implemented using Keras \cite{chollet2015keras} with TensorFlow \cite{abadi2016tensorflow} used as the backend.
+\subsection{Damage Simulation}
+The George Washington dataset, which is used for baseline testing, exists in fairly high quality.
 
 
-\subsection{Clustering}
+\subsection{Feature Extraction}
+Two methods were used for feature extraction. Histogram of oriented gradients (HOG) features were used as a baseline, and extracted using a scikit-image implementation \cite{van2014scikit}. The second method, the VAE's encoded representation of images, is detailed in the following section.
+
+
+
+%
+% VAE Details
+%
+\section{Variational Autoencoder}
+
+The purpose of the VAE is to learn an encoded representation of the word images without the need for ground truth label. The general structure of a VAE trains by encoding its input then attempting to recreate it using the decoder. Backwards propagation of error occurs based on how similar the decoded image is to the original input image. Thus, a successful encoding allows the decoder to accurately recreate the input image. This process is visualized in figure \ref{fig:vaedemo}.
+
+Figure blank shows. The experiment used two different architectures to determine the effect of expanding or contracting the size of the encoded layer, both were implemented using Keras \cite{chollet2015keras} with TensorFlow \cite{abadi2016tensorflow} used as the backend.
+
+
+\section{Clustering}
 To determine which word images contain the same word, clustering is performed on the encoded representation of the word images. The experiment tried two different clustering schemes: k-means and agglomerative. K-means is a popular centroid-based approach which iteratively refines the approximated center of each cluster \cite{lloyd1982least,likas2003global}. On the other hand, agglomerative clustering works by repeatedly merging the two closest clusters, resulting in a dendrogram with a single ``cluster" at one end and n ``clusters" at the other, where n is the number of data points.
 
 Agglomerative clustering provides a natural fit for clustering encoded word images. Intuitively, each step groups the two most similar images into the same cluster. So instead of defining the number of clusters before the algorithm starts, the algorithm can stop when the two most similar images differ by a given amount.
 
 
-\subsection{Priority Queue}
+\section{Priority Queue}
 In the current approach, images are labeled in the order which they appear. However, this can be modified depending on the need of the given task. For example, if a general understanding of the document's contents is more important than a word-for-word transcription, the system could request labels for frequently occurring words. Or, for partially damaged documents, the system could request labels for ``misfit" words that are particularly confusing to the encoder or to the clustering algorithm.
 
 
-\subsection{Providing Labels}
+\section{Providing Labels}
 Labels are provided in a simple graphical user interface which displays the original word image (before inverting it and removing the background). The interface, built using TKInter, allows a user to type in a label for the word image, skip to the next word, or flag the word image as needing re-segmentation.
 
 In the experiments, a simulated oracle was used for labeling. Because the word images were sorted in order of appearance in the text, the oracle simply labeled the image using the word at the corresponding index of the transcript.
 
 
-\subsection{Transcription}
+\section{Transcription}
 A transcription of the full set of word images can be given at any time. Each word image must be encoded by the network. The encoded representation is used to determine which cluster of images the word belongs to. Once a word image is clustered, transcribing it is simply a matter of applying the label for that cluster. If the cluster is unlabeled, words in that cluster will show up in the transcript as ``unknown." 
+
+
 
 
 %%
@@ -233,15 +280,89 @@ A transcription of the full set of word images can be given at any time. Each wo
 %
 %%
 \chapter{Evaluation}
-\section{George Washington Dataset}
+There were two goals in the evaluation phase. First, to determine whether the VAE's encoded representation of images could be used as features in the clustering phase of word spotting. The second goal was to determine whether the VAE could reconstruct damaged words so as to accurately classify them during word spotting.
 
+
+%
+% Data Background Section
+%
+\section{Data Background}
+Two datasets were used to evaluate the interactive approach to word recognition and ink restoration.
+
+\subsection{George Washington Dataset}
+The George Washington Dataset is enormously popular for evaluating handwriting recognition.
+
+The subset of data used in this paper is from work done by \cite{fischer2012lexicon}. The authors provide word segmentation, ground truth, and normalized images for 20 pages of the George Washington letters.
+
+\subsection{Wycliffe Dataset}
+
+
+%
+% George Washington Results
+%
+\section{Classification on George Washington Dataset}
+Results from experiments on original word images.
+
+\begin{center}
+\includegraphics[width=10cm]{results-placeholder}
+\end{center}
+
+
+
+%
+% George Washington Results
+%
+\section{Classification on ``Damaged'' George Washington Dataset}
+Results from experiments on damaged words.
+
+\begin{center}
+\includegraphics[width=10cm]{results-placeholder}
+\end{center}
+
+
+%
+% Wycliffe Data Results
+%
 \section{Wycliffe New Testament}
+Results from experiments on the Wycliffe dataset. First four pages or so?
+
+\begin{center}
+\includegraphics[width=10cm]{results-placeholder}
+\end{center}
 
 
 
-% Example Chapter
-\chapter{The First Chapter}
-\section{The First Section}
+
+
+%%
+%
+%
+% Introduction Chapter
+%
+%%
+\chapter{Conclusion}
+
+\section{Challenges}
+What I ran into.
+
+\section{Findings}
+What I found.
+
+\section{Future Work}
+Suggestions for future work.
+
+
+
+
+
+%%
+%
+%
+% Evaluation Chapter
+%
+%%
+\chapter{The Example Chapter}
+\section{The Example Section}
 Math goes here.
 \begin{figure}[h]
 \centering
