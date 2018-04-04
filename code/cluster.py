@@ -56,7 +56,7 @@ def loadClusterer(file_path):
 
 
 
-def saveClusters(centroids, directory=''):
+def saveClusters(centroids, n_clusters, n_neurons, directory=''):
     # save a NumPy structured array
     # each index has a centroid and a word label
     # initially, every word label is 'unknown'
@@ -66,6 +66,6 @@ def saveClusters(centroids, directory=''):
     if len(directory) > 0:
         if not (os.path.isdir(directory)):
             os.mkdir(directory)
-        np.save('{}/labeled_clusters.npy'.format(directory), np_clusters)
+        np.save('{}/labeled_clusters_{}clusters_{}neurons.npy'.format(directory, n_clusters, n_neurons), np_clusters)
     else:
-        np.save('labeled_clusters.npy'.format(directory), np_clusters)
+        np.save('labeled_clusters_{}clusters_{}neurons.npy'.format(n_clusters, n_neurons), np_clusters)
