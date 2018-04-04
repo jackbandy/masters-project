@@ -184,10 +184,46 @@ The methods used in this paper come from a variety of these related tasks, inclu
 
 \section{Preprocessing}
 \subsection{Alignment}
+Rotation, etc.
+
+\subsection{Binarization}
+Once the word images are segmented, the RGB image is flattened into a single grayscale channel. The image is then inverted so that the text is white and the background dark gray. To remove the gray background, a two-bin histogram is generated that heuristically determines a natural boundary between the background and foreground values. Each pixel below this boundary is set to black. FIGURE. Lastly, to deal with the varying width and height of words, each image is centered inside a canvas before being fed to the network.
+
+
 \subsection{Segmentation}
-\section{Labeling}
+To preserve the possibility of crowdsourcing the labeling task for images of individual words, each step in the pipeline assumes the document page has been segmented into words. This makes for simpler machine learning mechanisms, but adds the step of segmenting the manuscript image into individual words.
+
+Because the Wycliffe New Testament is aligned and spaced so consistently, the segmentation for this project involved plotting a vertical projection profile of a page image to determine the location of individual lines of text. To segment the line of text into individual words, in this case, a simple threshold on the horizontal projection profile provided sufficient accuracy. Because of the alignment, the intensity vector across the line had consistent valleys at the spaces in between each word.
 
 
+
+\section{Training and Clustering}
+
+\subsection{Variational Autoencoder}
+The purpose of the VAE is to learn an encoded representation of the word images without the need for ground truth label. The VAE trains by encoding its input then attempting to recreate it using the decoder. Backwards propagation of error occurs based on how similar the decoded image is to the original input image. Thus, a successful encoding allows the decoder to accurately recreate the input image. This process is visualized in figure \ref{fig:vaedemo}.
+
+
+Figure blank showsThe experiment used two different architectures to determine the effect of expanding or contracting the size of the encoded layer, both were implemented using Keras \cite{chollet2015keras} with TensorFlow \cite{abadi2016tensorflow} used as the backend.
+
+
+\subsection{Clustering}
+To determine which word images contain the same word, clustering is performed on the encoded representation of the word images. The experiment tried two different clustering schemes: k-means and agglomerative. K-means is a popular centroid-based approach which iteratively refines the approximated center of each cluster \cite{lloyd1982least,likas2003global}. On the other hand, agglomerative clustering works by repeatedly merging the two closest clusters, resulting in a dendrogram with a single ``cluster" at one end and n ``clusters" at the other, where n is the number of data points.
+
+Agglomerative clustering provides a natural fit for clustering encoded word images. Intuitively, each step groups the two most similar images into the same cluster. So instead of defining the number of clusters before the algorithm starts, the algorithm can stop when the two most similar images differ by a given amount.
+
+
+\subsection{Priority Queue}
+In the current approach, images are labeled in the order which they appear. However, this can be modified depending on the need of the given task. For example, if a general understanding of the document's contents is more important than a word-for-word transcription, the system could request labels for frequently occurring words. Or, for partially damaged documents, the system could request labels for ``misfit" words that are particularly confusing to the encoder or to the clustering algorithm.
+
+
+\subsection{Providing Labels}
+Labels are provided in a simple graphical user interface which displays the original word image (before inverting it and removing the background). The interface, built using TKInter, allows a user to type in a label for the word image, skip to the next word, or flag the word image as needing re-segmentation.
+
+In the experiments, a simulated oracle was used for labeling. Because the word images were sorted in order of appearance in the text, the oracle simply labeled the image using the word at the corresponding index of the transcript.
+
+
+\subsection{Transcription}
+A transcription of the full set of word images can be given at any time. Each word image must be encoded by the network. The encoded representation is used to determine which cluster of images the word belongs to. Once a word image is clustered, transcribing it is simply a matter of applying the label for that cluster. If the cluster is unlabeled, words in that cluster will show up in the transcript as ``unknown." 
 
 
 %%
