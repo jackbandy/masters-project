@@ -11,6 +11,7 @@ import numpy as np
 import imageio
 import os
 import matplotlib.pyplot as plt
+import cv2
 
 
 def loadRawImage(file_path):
@@ -55,23 +56,19 @@ def preProcessImages(images):
 
 def binarizeImage(image):
     image_array = np.array(image)
-    hist, bin_edges = np.histogram(image_array, bins=2)
-    threshold = bin_edges[1]
-    binarized_image = np.where(image > threshold, 1, 0)
+    blur = cv2.GaussianBlur(image_array,(5,5),0)
+    cutoff, threshed = cv2.threshold(blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
-    return binarized_image
+    return threshed
 
 
 
 def removeBackground(image):
     image_array = np.array(image)
-    hist, bin_edges = np.histogram(image_array, bins='auto')
-    # choose the bin edge (shortcut)
-    halfway = int(bin_edges.shape[0] * .6)
-    threshold = bin_edges[halfway]
-    no_background_image = np.where(image > threshold, image, 0)
+    blur = cv2.GaussianBlur(image_array,(5,5),0)
+    cutoff, threshed = cv2.threshold(blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
-    return no_background_image
+    return threshed
 
 
 

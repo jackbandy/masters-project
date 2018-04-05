@@ -26,10 +26,12 @@ def main():
     for name in images:
         if name !='.DS_Store':
             all_estimates += getWordEstimates(image_dir+name, name)
+    '''
     with open('estimates.csv', 'w') as out:
         for est in all_estimates:
             out.write('{},{},{},{},{},{}\n'.format(
                 est[0], est[1], est[2], est[3], est[4], est[5]))
+    '''
 
 
 def getWordEstimates(image_path, image_name):
@@ -38,7 +40,7 @@ def getWordEstimates(image_path, image_name):
 
     line_locations = smartHorizontalLines(binary_image)
     all_word_locations = []
-    #plt.imshow(binary_image,cmap='gray')
+    plt.imshow(binary_image,cmap='gray')
 
     previous_line_bound = 0
     #words = smartVerticalLines(binary_image[line_locations[5]:line_locations[6], :],test_plots=True)
@@ -48,7 +50,7 @@ def getWordEstimates(image_path, image_name):
     for l in line_locations:
         # plot the horizontal line
         print("working at line {}".format(l))
-        #plt.plot((0,binary_image.shape[1]), (l,l), 'w')
+        plt.plot((0,binary_image.shape[1]), (l,l), 'w')
         word_locations = smartVerticalLines(binary_image[previous_line_bound:l, :])
         previous_word_bound = 0
         for w in word_locations:
@@ -63,7 +65,9 @@ def getWordEstimates(image_path, image_name):
     word_locations = smartVerticalLines(binary_image[line_locations[-1]:l, :])
     #for w in word_locations:
         #plt.plot((w,w), (previous_line_bound, l), 'w')
-    
+
+    plt.show()
+
     return estimates
 
 
