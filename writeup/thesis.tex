@@ -43,6 +43,11 @@ Acknowledge people/things here
 %%
 \chapter{Introduction}
 
+This project deals with automated word recognition for historical documents, especially documents that have been physically damaged.
+
+Extensive research exists in printed text recognition and handwriting recognition, and for modern data, the input to these problems is remarkably clean. Historical data, such as that considered in this project, presents challenges that are not often considered in related literature. For example, although many projects for handwritten word recognition consider variations caused by penmanship, very few consider variations caused by physical damage.
+
+This chapter reviews related literature, motivates an alternative approach, and outlines the contributions of the project.
 
 %
 % Related Work
@@ -50,38 +55,39 @@ Acknowledge people/things here
 \section{Related Work}
 For several decades, researchers have been developing methods for automated character and word recognition. These methods take some photograph(s) of printed or handwritten text as input, and produce a transcript of that text as output. This section provides a brief summary of methods which have influenced the course of this research area, including advances in handwriting recognition, printed text recognition, and handwritten word spotting.
 
-The nomenclature for these related tasks can be somewhat inconsistent in the literature. For the purposes of this paper, ``handwriting recognition'' differs from ``handwritten word spotting'' in that the former aims to create full transcriptions while the latter merely locates and/or recognizes instances of a given word within a document. ``Printed text recognition,'' although it uses many of the same methods, refers to projects that examine machine-printed texts. The consistency of character representations and thus word representations drastically changes the task, so a distinction is necessary.
+The nomenclature for these related tasks can be somewhat inconsistent in the literature. For the purposes of this paper, ``handwriting recognition'' differs from ``handwritten word spotting'' in that the former aims to create full transcriptions while the latter merely locates and/or recognizes instances of a given word within a document. ``Printed text recognition,'' although it uses many of the same methods, refers to projects that examine machine-printed texts. As detailed in the following sections, the fields have essentially converged at this point, but a distinction is necessary for the previous decades.
+
 
 % Text Recognition Subsection
 \subsection{Text Recognition}
-``Text recognition'' here refers to recognizing {\em printed} texts, not handwritten texts. From a technical standpoint, automatic text recognition is the task of turning an image into the text within the image.
+From a technical standpoint, automatic text recognition is the task of turning an image into the text within the image. ``Text recognition'' here refers to recognizing {\em printed} texts, not handwritten texts, which prompts several convenient assumptions. Namely, that all occurrences of a given character will be nearly identical in shape and size. Because of this assumption, researchers could attempt letter-for-letter recognition on documents, a process known as object character recognition (OCR).
 
-Object character recognition (OCR) on scans of printed documents has seen success since as early as the 1980s \cite{mantas1986overview,govindan1990character}. Due to the consistency of letter shapes and sizes, fairly simple techniques for pattern recognition could accurately classify characters in the same font family. However, as early as 1987, font and size constraints were no longer needed. The authors of \cite{kahan1987recognition} demonstrated a system that accurately classified mixtures of dissimilar fonts of varied sizes.
+OCR on scans of printed documents has seen success since as early as the 1980s \cite{mantas1986overview,govindan1990character}, with methods detailed as early as the 1950s \cite{glauberman1956character}. A survey from 1996 \cite{trier1996feature} notes that, due to the consistency of letter shapes and sizes in question, simple techniques such as projection histograms, template matching, zoning, and geometric moments were successful. As early as 1987, font and size constraints were no longer needed. The authors of \cite{kahan1987recognition} demonstrated a system that accurately classified mixtures of dissimilar fonts of varied sizes.
 
 Gradually, more and more constraints were eliminated. After \cite{kahan1987recognition} removed the need for font and size assumptions, the race was on to eliminate constraints such as alignment, color, contrast, and more. Eventually, the task of printed text recognition was one that could be done ``in the wild,'' \cite{smith2007overview,wang2012end,jaderberg2016reading} with essentially no assumptions about the nature of the text. Especially important for ``in the wild'' recognition was eliminating the segmentation step, as in \cite{rusinol2015efficient}, such that regions of text could be found without a processing phase devoted to localization. The ideal system, then, would be able to recognize text in any image in which a human could see text.
 
-An important benchmark dataset for this kind of text recognition is Street View Text (SVT) \cite{wang2010word}. SVT was harvested using pictures from Google Street View, and thus contains a heterogeneous collection of word images with a variety of fonts, colors, backgrounds, and more. (Despite the variations, word images in this set do not include handwritten characters.) The SVT dataset was released in 2010, and by 2012, \cite{wang2012end} demonstrated state-of-the-art performance for both character recognition and word recognition by training on images from the dataset. The high degree of accuracy was achieved via unsupervised feature learning and convolutional neural networks.
+An important benchmark dataset for this kind of text recognition is Street View Text (SVT) \cite{wang2010word}. SVT was harvested using pictures from Google Street View, and thus contains a heterogeneous collection of word images with a variety of fonts, colors, and backgrounds. (Despite the variations, word images in this set do not include handwritten characters.) The SVT dataset was released in 2010, and by 2012, \cite{wang2012end} used it to train a neural network that achieved state-of-the-art performance for both character recognition and word recognition. The high degree of accuracy was achieved via unsupervised feature learning and convolutional neural networks.
 
-Even before 2012, many researchers realized that convolutions provide an ideal mechanism for recognizing the shapes of different letters. Others have taken more general approaches to text recognition via CNNs \cite{wang2012end,jaderberg2016reading}, . The network architectures from these papers are, on the whole, restrictively large, whereas both architectures from my experiments were able to run on my laptop.
+In fact, even before 2012, many researchers realized that convolutions were ideal for recognizing the shapes of different letters and words \cite{saidane2007automatic,delakis2008text}, and the trend only became stronger after successes like \cite{wang2012end}. Convolutional neural networks (CNNs) offered exceptional performance with lower computational costs than ``fully-connected'' neural networks. Today, many robust approaches to text recognition exist via CNNs \cite{wang2012end,yin2014robust,jaderberg2016reading}.
 
 
 % Handwriting Recognition Subsection
 \subsection{Handwriting Recognition}
 Although modern methods for printed text recognition overlap methods for handwriting recognition, especially with CNNs for ``in-the-wild" recognition, the convergence happened after years of parallel research. Handwriting recognition can be divided into two major categories, ``online" handwriting recognition and ``offline" handwriting recognition. In the former, software tracks the location of a writing utensil as a user moves it across some surface to produce letters and words, and the precise location and motion of the utensil helps reveal the intended writing. For example, UNIPEN \cite{guyon1994unipen}, a benchmark dataset for online handwriting recognition, includes ``pen trajectory" data that specifies when and where the pen touched down and lifted up, as well as the coordinates for the path of the pen.
 
-More relevant to this project is the task of offline handwriting recognition, in which the input comprises only a picture of the handwriting and no additional information about its creation. A canonical example of the text recognition task is the MNIST dataset \cite{lecun1998mnist}. MNIST comprises grayscale images of individual handwritten digits, 0 to 9, and the objective is to classify each image into the digit written inside of it. Machine learning researchers have been using this task as a benchmark for several decades \cite{bottou1994comparison}, with error rates well below 1\% since 2003 \cite{kussul2004improved}.
+More relevant to this project is the task of {\em offline} handwriting recognition, in which the input comprises only a picture of the handwriting and no additional information about its creation. A canonical example of the text recognition task is the MNIST dataset \cite{lecun1998mnist}. MNIST comprises grayscale images of individual handwritten digits, 0 to 9, and the objective is to classify each image into the digit written inside of it. Machine learning researchers have been using this task as a benchmark for several decades \cite{bottou1994comparison}, with error rates well below 1\% since 2003 \cite{kussul2004improved}.
 
-Projects using MNIST and similar datasets are premised upon many constraints. For example, a very small vocabulary or character set could be recognized if they were properly aligned and segmented, but as soon as a text ventured outside those constraints (variations on letters, misspelled words, new characters, etc.), the system would falter. Even moderately successful recognition on unconstrained datasets did not exist until the early 2000s.
+Projects using MNIST and similar datasets are premised upon many constraints, although they differ from those made for printed text. Rather than assuming consistency in size and shape, the projects assume a very small vocabulary or character set, which can be accurately recognized with properly alignment and segmentation. As soon as a text ventured outside those constraints (misspelled words, new characters, etc.), the system would falter. Even moderately successful recognition on unconstrained datasets did not exist until the early 2000s.
 
-This changed with the use of hidden Markov Models (HMMs) \cite{marti2001using,bunke2004offline,el1999hmm}. With statistical models built for specific languages, character and word recognition accuracies improved to over 85\% (varying with respect to the test corpus). More impressively, these results came on { \em unconstrained} texts.
+This changed with the use of hidden Markov Models (HMMs) \cite{marti2001using,bunke2004offline,el1999hmm}. HMMs utilized statistical models built for specific languages to narrow down the classifications for a given letterform. A common example in english is that when a ``q'' occurs, a well-trained HMM will know to expect a ``u'' to follow. With HMMs, character and word recognition accuracies improved to over 85\% (varying with respect to the test corpus) on ``unconstrained" texts.
 
-While HMMs made the way for unconstrained datasets, many demonstrations were still using the IAM dataset \cite{marti2002iam}, an ad-hoc database for researchers. In other words, {\em truly} unrestricted handwriting recognition was still a long way off even after the strides made by HMMs. Moving forward, a collection of George Washington letters became the de-facto standard. This dataset comprised hundreds of manuscript pages from the Library of Congress, handwritten by George Washington's secretaries.
+Although the texts were nominally unconstrained datasets, many demonstrations were still using the IAM dataset \cite{marti2002iam}, an ad-hoc database for researchers. In other words, {\em truly} unrestricted handwriting recognition was still a long way off even after the strides made by HMMs. Moving forward, a collection of George Washington letters became the de-facto standard. This dataset comprises hundreds of manuscript pages from the Library of Congress, handwritten by George Washington's secretaries. (A subset of this dataset is used in the evaluation portion of this project.)
 
-In the mid-2000s, even state-of-the-art HMM methods yielded word error rates around 50\% on datasets such as the George Washington collection. But around this time, researchers began taking a new angle at the problem. Specifically, projects focused on the process of ``handwriting retrieval,'' rather than attempting complete transcriptions. Such projects allow users to query a dataset of images for a given word, and essentially scans the images for visual matches of that word. For example, \cite{rath2004search} presents a word retrieval system that achieves 63\% mean average precision scores on the George Washington collection.
+In the mid-2000s, state-of-the-art HMM methods yielded word error rates around 50\% on {\em truly} unrestricted datasets such as the George Washington collection. But around this time, researchers began taking a new angle at the problem. Specifically, projects focused on the process of ``handwriting retrieval,'' rather than attempting complete transcriptions. Such projects allow users to query a dataset of images for a given word, and essentially scans the images for visual matches of that word. For example, \cite{rath2004search} presents a retrieval system that achieves 63\% mean average precision scores on the George Washington collection.
 
-In \cite{rath2007word}, this approach is formalized as a viable way to generate a searchable index of handwritten papers. Their method of ``wordspotting'' turns the search problem into a clustering problem, where word images that are ``closest'' to the query word are considered matches. Wordspotting is considered more thoroughly in the following section, however it is crucial to note that this approach eliminated the need for recognizing words before retrieval. In other words, matching is done in real-time.
+In \cite{rath2007word}, the word retrieval approach is formalized as a viable way to generate a searchable index of handwritten papers. Their method of ``wordspotting'' turns the search problem into a clustering problem, where word images that are ``closest'' to the query word are considered matches. Wordspotting is considered more thoroughly in the following section, however it is crucial to note that this approach eliminated the need for recognizing words before retrieval. In other words, rather than generating a full index beforehand, matching is done in real-time.
 
-Building upon the success of wordspotting techniques and HMMs, \cite{howe2009finding} takes a step further and first detects {\em characters} in a word, before inferring a word using an ensemble of HMMs. This approach allowed the recognition of words that were never seen during training, and established new standards for the George Washington dataset.
+Building upon the success of wordspotting techniques and HMMs, \cite{howe2009finding} takes a step further and first detects handwritten {\em characters} in a word, then infers a word using an ensemble of HMMs. This approach allowed the recognition of words that were never seen during training, and established new standards for the George Washington dataset.
 
 By the time ensemble HMMs came onto the scene, neural networks were already penetrating the field of handwriting recognition \cite{fernandez2007application}. By 2010, advanced techniques such as bidirectional long short-term memory (BLSTM) were successfully applied to wordspotting \cite{wang2010word} and outperformed other methods. Finally, recurrent neural networks \cite{frinken2012novel} eliminated the need for word segmentation in addition to improving state-of-the-art performance on recognition tasks.
 
@@ -91,24 +97,32 @@ More recently, convolutional neural networks (CNNs) have become the state-of-the
 \subsection{Word Spotting on Damaged Handwritten Documents}
 In this section, the scope of related projects is narrowed down from all handwriting recognition systems, and I examine research related to word spotting on historical documents.
 
-As previously mentioned, \cite{rath2007word} formalized the idea of wordspotting. However, the concept was originally proposed in \cite{manmatha1996word}, which clustered similar words to be annotated by users, and reported success for documents written by a single person in high-quality handwriting.
+As previously mentioned, \cite{rath2007word} formalized the idea of wordspotting. However, the concept was originally proposed in \cite{manmatha1996word}, which clustered similar words to be annotated by users, and reported success for single-author documents with high-quality scans of the handwriting. \cite{tomai2002transcript} acknowledges some of the main challenges for historical documents: perfect line and word segmentation is nearly impossible, and unconstrained word recognition is extremely difficult. Although their proposed ``transcript mapping" method assumes a pre-existing transcript for the input image, it introduces concepts for handling variable baseline position, line skew, character size, and inter-line distance.
+
+A fairly complete system for retrieving words in handwritten manuscripts is presented in \cite{rath2004search}. Once again, the solution steers away from the challenging task of full-on handwriting {\em recognition}, and instead focuses on retrieval of individual words. The goal is to provide a way for users to search the document, not necessarily to reveal its exact contents.
+
+After performance improved on retrieval, around 2009, researchers began returning to the recognition task. A segmentation-free approach described in \cite{howe2009finding} utilizes character detection to improve state-of-the art performance on the GW20 manuscript. Because it is character-based, their system also recognizes words not seen in the training phase, the first such achievement for handwritten cursive manuscripts.
 
 
+The Parzival database \cite{fischer2010ground}, a medieval German text from the 13th century, became a popular evaluation benchmark, and \cite{fischer2014combined} used it to demonstrate a system for full-on recognition, although it relied on a predetermined vocabulary. The following year, \cite{rusinol2015efficient} match state-of-the-art performance with a segmentation-free approach to word spotting, and by 2016, as they had done for printed text recognition and handwriting recognition, CNNs had set new standards for word spotting in historical documents \cite{sudholt2016phocnet,zhong2016spottingnet,krishnan2016deep} .
+
+
+Finally, \cite{biller2013webgt} demonstrates an interactive approach for ground truth generation, allowing users to annotate manuscript excerpts with labels for characters and words. However, the goal of the system is simply to create training data, rather than allow for collaborative transcription.
 
 
 %
 % Motivation
 %
 \section{Motivation}
-On the surface, optical character recognition, word recognition, and handwriting recognition appear to be solved problems. As detailed in the previous section, the explosion of machine learning research in recent years has led to drastic improvements in performance on these tasks, and many advancements have even found their way to consumer products. For example, everyday software allows users to search within scans or photographs of printed typeface, and note-taking software can now interpret penmanship that would be indecipherable to many human readers.
+From the review of related work, printed text recognition, handwritten word recognition, and handwritten word spotting may appear to be solved problems. The explosion of machine learning research ? in particular convolutional neural networks ? has led to drastic improvements in performance on these tasks, and many advancements have even found their way to consumer products. For example, default software on most PCs allows users to search within scans or photographs of printed typeface, and note-taking software can now interpret penmanship that would be indecipherable to many human readers.
 
-However, the process of transcribing ancient documents presents a niche area of text recognition which is not addressed well by standard approaches. Many historical documents, including those reviewed in this project, were meticulously transcribed with legibility comparable to typeface, suggesting that automated transcription would be straightforward. But over time, these documents have incurred damage of all different kinds. The characters originally may have looked like typeface, but after hundreds of years of human handling, physical corrosion, chemical decay, and other processes, reading certain parts of these documents is an arduous task even for skilled textual analysts. For such cases, neither fully human transcription nor fully automated transcription is ideal.
+However, the process of automatically transcribing damaged documents presents a niche area of text recognition which is not addressed well by standard approaches. Many historical documents, including those reviewed in this project, were meticulously transcribed with legibility comparable to typeface, suggesting that automated transcription would be straightforward. But over time, these documents have incurred damage of all different kinds. The characters originally may have looked like typeface, but after hundreds of years of human handling, physical corrosion, chemical decay, and other processes, reading certain parts of these documents is an arduous task even for skilled textual analysts. For such cases, neither fully human transcription nor fully automated transcription is ideal.
 
-While fully manual transcription is the most accurate solution, it is incredibly time-consuming for larger documents. Moreover, on damaged documents, skilled papyrologists are required to decipher texts. In short, human transcription is often prohibitively costly in terms of time and skilled personnel.
+While fully manual transcription is the most accurate solution, it is incredibly time-consuming for larger documents. Moreover, on damaged documents, skilled papyrologists are required to decipher texts. This makes human transcription prohibitively costly in terms of time and skilled personnel.
 
-A fully automated transcription algorithm may successfully transcribe certain portions of a historical document, but the damaged portions can distort the algorithm's output to the point of being unusable. This is especially true in cases where letters are literally missing. This is especially true for OCR algorithms which assume constant width, spacing, and more within a document.
+A fully automated transcription algorithm may successfully transcribe certain portions of a historical document, but the damaged portions can distort the algorithm's output to the point of being unusable. This is especially true in cases where letters are literally missing, since OCR algorithms often assume constant width and spacing within a document.
 
-An ideal solution would leverage automated transcription for the undamaged portions, and allow a human reader to fill in any gaps. A framework for this hybrid approach is presented in \cite{schaekermann2016resolvable}, which also provides an elegant schematic of the approach in Figure \ref{fig:hcml-schematic}.
+An ideal solution would leverage automated transcription for the undamaged portions, and allow a human reader to fill in any gaps. Figure \ref{hcml-schematic} shows the potential architecture of such framework, which was presented in \cite{schaekermann2016resolvable}, which also provides an elegant schematic of the approach in Figure \ref{fig:hcml-schematic}.
 
 
 \begin{figure}[t]
@@ -129,16 +143,17 @@ I refer to this as semi-automated transcription. This project presents a pipelin
 \section{Contributions}
 The methods used in this project borrow heavily from methods in the aforementioned research areas, including keyword and character spotting \cite{sharma2015adapting,frinken2012novel}, word recognition \cite{howe2009finding}, and handwriting recognition \cite{fischer2013fast,bluche2013feature}.
 
-Nonetheless, this project makes two notable contributions to the area of handwritten text recognition, both concerned with the challenges of damaged words. First, a framework for semi-automated transcription is detailed and implemented, in which damaged words could be labeled by an expert and seamlessly integrated into an otherwise automated word spotting process. The second contribution is an approach for virtually restoring damaged or low-quality words into a representation that could be recognized automatically.
+Nonetheless, the project makes two notable contributions to the area of handwritten text recognition, both concerned with the challenges of damaged words. First, a framework for semi-automated transcription is detailed and implemented, in which damaged words could be labeled by an expert and seamlessly integrated into an otherwise automated word spotting process. The second contribution is an approach for virtually restoring damaged or low-quality words into a representation that could be recognized automatically.
 
 
 \subsection{An Interactive Approach to Word Spotting}
-A semi-automated approach to word spotting utilizes user-provided labels of words in a given document. Essentially, a group of users generate a training set, which allows the system to recognize most occurrences of a given word in the training set. If a distorted occurrence of the word exists, the system will leave it unlabeled and leave the word image in the pool of images to be labeled by users.
+A semi-automated approach to word spotting utilizes user-provided labels of words in a given document. Essentially, given segmented word images, a standard algorithm clusters words and allows users to label a cluster. However, once a cluster is labeled, users can still improve the system. In practice, this allows a user to correct an incorrect classification from the clustering algorithm.
+
+There are several benefits to this kind of system.
 
 
 \subsection{A Technique for Virtual Ink Restoration}
-Several techniques .
-
+To deal with the problem of damaged and distorted words, this project presents a variational autoencoder (VAE) for restoring words with missing letters or partial letters. As long as an undamaged occurrence of the word exists somewhere in the training set, the VAE can capture and recreate the word's appearance. Not only does the recreation lead to accuracy improvements for automated recognition, it also allows users to see an enhanced version of the original manuscript.
 
 
 
@@ -226,10 +241,24 @@ Once the column images are cropped, the RGB image is flattened into a single gra
 Because the column image is assumed to only contain ink and paper, a histogram of values in the column image should be bimodal (the two peaks representing the approximate value of an ink pixel and a paper pixel). Otsu's binarization algorithm \cite{otsu1979threshold} takes advantage of this bimodal distribution. It works by choosing a threshold value in between the two peaks that minimizes the variance within the two ``classes,'' an ideal method for these manuscript pages.
 
 
-\subsection{Segmentation}
+\subsection{Line Segmentation}
 After column images are binarized, the next step is to split the column into its individual lines and words.
 
-The Wycliffe New Testament is aligned and spaced with remarkable consistency. So, the segmentation involved plotting a vertical projection profile of a page image to determine the location of individual lines of text. To segment the line of text into individual words, in this case, a simple threshold on the horizontal projection profile provided sufficient accuracy. Because of the alignment, the intensity vector across the line had consistent valleys at the spaces in between each word.
+The Wycliffe New Testament is aligned and spaced with remarkable consistency, and the segmentation technique takes advantage of this. A vertical projection profile of a page image is used to determine the approximate location of individual lines of text. However, because lines are relatively wide (10-12 words), writing on some pages is slightly slanted. Figure \ref{fig:flat-vs-tilted} illustrates the dilemma perfectly horizontal segmentations.
+
+To segment tilted lines of text, a line of best fit must be generated across the words. This is achieved by taking the coordinates of all the nonzero values (i.e. values above the ink threshold) in the approximated horizontal text region, and applying random sample consensus (RANSAC) \cite{fischler1987random} to generate a line of best fit. The resulting approximation eliminates most word cutoff
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=10cm]{flat-vs-tilted}
+\end{center}
+\caption{Illustrating the need for tilt during the line segmentation phase. Although the column has been aligned vertically, perfectly horizontal approximations (above) for line segmentation result in cutoff words. Tilted lines generated by the RANSAC algorithm fit the slight slant of the text.}
+\label{fig:flat-vs-tilted}
+\end{figure}
+
+
+\subsection{Word Segmentation}
+To segment the line of text into individual words, in this case, a simple threshold on the horizontal projection profile provided sufficient accuracy. Because of the alignment, the intensity vector across the line had consistent valleys at the spaces in between each word.
 
 
 \subsection{Damage Simulation}
@@ -289,13 +318,28 @@ There were two goals in the evaluation phase. First, to determine whether the VA
 \section{Data Background}
 Two datasets were used to evaluate the interactive approach to word recognition and ink restoration.
 
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[height=1.8cm]{gw-sample}
+\includegraphics[height=1.8cm]{parzival-sample}
+\includegraphics[height=1.8cm]{wycliffe-sample}
+\end{center}
+\caption{Sample lines from the George Washington dataset (left), the Parzival dataset (middle), and the Wycliffe dataset (right).}
+\label{fig:dataset-samples}
+\end{figure}
+
+
 \subsection{George Washington Dataset}
 The George Washington Dataset is enormously popular for evaluating handwriting recognition.
 
 The subset of data used in this paper is from work done by \cite{fischer2012lexicon}. The authors provide word segmentation, ground truth, and normalized images for 20 pages of the George Washington letters.
 
-\subsection{Wycliffe Dataset}
+\subsection{Parzival Dataset}
+The Parzival database is a medieval German text from the 13th century which was annotated and made publicly available by \cite{fischer2010ground}. It includes nearly 50 manuscript pages. The ink and parchment closely resemble the Wycliffe documents, which is not too surprising given their chronological proximity.
 
+\subsection{Wycliffe Dataset}
+Details about Wycliffe acquisition.
 
 %
 % George Washington Results
