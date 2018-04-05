@@ -7,6 +7,7 @@ this is unfinished
 import os
 from scipy import misc
 from scipy.signal import argrelmin
+from sklearn import linear_model
 import numpy as np
 import imageio
 import matplotlib.pyplot as plt
@@ -16,6 +17,7 @@ from scipy.optimize import leastsq
 import pylab as plt
 from scipy.ndimage.filters import gaussian_filter
 from cv2 import erode,dilate
+import pdb
 
 
 def main():
@@ -23,10 +25,12 @@ def main():
     images = os.listdir(image_dir)
 
     all_estimates = []
+    all_estimates += getWordEstimates(image_dir+images[3], images[3])
+
+    '''
     for name in images:
         if name !='.DS_Store':
             all_estimates += getWordEstimates(image_dir+name, name)
-    '''
     with open('estimates.csv', 'w') as out:
         for est in all_estimates:
             out.write('{},{},{},{},{},{}\n'.format(
@@ -39,6 +43,8 @@ def getWordEstimates(image_path, image_name):
     binary_image = util.removeBackground(page_image)
 
     line_locations = smartHorizontalLines(binary_image)
+    tilted_lines = tiltLines(binary_image, line_locations)
+
     all_word_locations = []
     plt.imshow(binary_image,cmap='gray')
 
@@ -46,11 +52,13 @@ def getWordEstimates(image_path, image_name):
     #words = smartVerticalLines(binary_image[line_locations[5]:line_locations[6], :],test_plots=True)
     
     estimates = []
-    
-    for l in line_locations:
+   
+    edge = binary_image.shape[1] - 100
+    for tilted in tilted_lines:
         # plot the horizontal line
-        print("working at line {}".format(l))
-        plt.plot((0,binary_image.shape[1]), (l,l), 'w')
+        #print("working at line {}".format(l))
+        plt.plot((100,edge), (tilted.predict(100),tilted.predict(edge)), 'r')
+        '''
         word_locations = smartVerticalLines(binary_image[previous_line_bound:l, :])
         previous_word_bound = 0
         for w in word_locations:
@@ -65,12 +73,38 @@ def getWordEstimates(image_path, image_name):
     word_locations = smartVerticalLines(binary_image[line_locations[-1]:l, :])
     #for w in word_locations:
         #plt.plot((w,w), (previous_line_bound, l), 'w')
+    '''
 
     plt.show()
 
     return estimates
 
 
+
+def tiltLines(image, flat_line_locations, margin_height=10):
+    ransac_lines = []
+    lr_lines = []
+    for i in range(len(flat_line_locations)-1):
+        line_loc = flat_line_locations[i]
+        word_area = image[flat_line_locations[i]:flat_line_locations[i+1]]
+        fit_points = np.where(word_area > 0)
+        y = fit_points[0] + line_loc
+        X = fit_points[1].reshape(-1,1) 
+
+        # Fit line using all data
+        lr = linear_model.LinearRegression()
+        lr.fit(X, y)
+
+        # Robustly fit linear model with RANSAC algorithm
+        ransac = linear_model.RANSACRegressor(min_samples=500)
+        ransac.fit(X, y)
+        inlier_mask = ransac.inlier_mask_
+        outlier_mask = np.logical_not(inlier_mask)
+
+        ransac_lines.append(ransac)
+        lr_lines.append(lr)
+
+    return ransac_lines
 
 
 
