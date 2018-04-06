@@ -25,47 +25,59 @@ def main():
     images = os.listdir(image_dir)
 
     all_estimates = []
-    all_estimates += getWordEstimates(image_dir+images[3], images[3])
+    #all_estimates += getWordEstimates(image_dir+images[3], images[3])
 
-    '''
     for name in images:
         if name !='.DS_Store':
             all_estimates += getWordEstimates(image_dir+name, name)
+    '''
     with open('estimates.csv', 'w') as out:
         for est in all_estimates:
             out.write('{},{},{},{},{},{}\n'.format(
                 est[0], est[1], est[2], est[3], est[4], est[5]))
     '''
 
-
 def getWordEstimates(image_path, image_name):
     page_image = util.loadImage(image_path)
     binary_image = util.removeBackground(page_image)
+    plt.imshow(binary_image, cmap='gray')
 
     line_locations = smartHorizontalLines(binary_image)
     tilted_lines = tiltLines(binary_image, line_locations)
+    avg_line_height = calculateLineHeight(line_locations)
+    avg_line_split = int(avg_line_height / 2)
+    print("Average height for page {}: {}".format(image_name, avg_line_height))
 
     all_word_locations = []
-    plt.imshow(binary_image,cmap='gray')
 
     previous_line_bound = 0
     #words = smartVerticalLines(binary_image[line_locations[5]:line_locations[6], :],test_plots=True)
     
     estimates = []
    
-    edge = binary_image.shape[1] - 100
+    edge = binary_image.shape[1]
     for tilted in tilted_lines:
-        # plot the horizontal line
-        #print("working at line {}".format(l))
-        plt.plot((100,edge), (tilted.predict(100),tilted.predict(edge)), 'r')
-        '''
-        word_locations = smartVerticalLines(binary_image[previous_line_bound:l, :])
+        # clear out above and below the slanted text
+        tmp_image = np.array(binary_image)
+        for i in range(0,edge):
+            center = int(tilted.predict(i))
+            top = center - avg_line_split
+            bot = center + avg_line_split
+            tmp_image[:top,i] = 0
+            tmp_image[bot:,i] = 0
+
+        left = tilted.predict(0)
+        right = tilted.predict(edge)
+        line_top = int(min(left, right)) - avg_line_split
+        line_bot = int(min(left, right)) + avg_line_split
+
+        word_locations = smartVerticalLines(tmp_image[line_top:line_bot, :])
         previous_word_bound = 0
         for w in word_locations:
-            #plt.plot((w,w), (previous_line_bound, l), 'w')
-            estimates.append([image_name,previous_line_bound,previous_word_bound,l,w,"unlabeled"])
+            center = int(tilted.predict(w))
+            plt.plot((w,w), (center-avg_line_split, center+avg_line_split), 'w')
+            #estimates.append([image_name,previous_line_bound,previous_word_bound,l,w,"unlabeled"])
             previous_word_bound = w
-        previous_line_bound = l
 
     #edge case: get the last line of text
     l = binary_image.shape[0]
@@ -73,7 +85,6 @@ def getWordEstimates(image_path, image_name):
     word_locations = smartVerticalLines(binary_image[line_locations[-1]:l, :])
     #for w in word_locations:
         #plt.plot((w,w), (previous_line_bound, l), 'w')
-    '''
 
     plt.show()
 
@@ -81,9 +92,23 @@ def getWordEstimates(image_path, image_name):
 
 
 
-def tiltLines(image, flat_line_locations, margin_height=10):
+def tiltLines(image, flat_line_locations, use_ransac=False, ransac_samples=20):
     ransac_lines = []
     lr_lines = []
+
+    # front edge case
+    word_area = image[0:flat_line_locations[0]]    
+    fit_points = np.where(word_area > 0)
+    y = fit_points[0] 
+    X = fit_points[1].reshape(-1,1) 
+    if use_ransac:
+        ransac = linear_model.RANSACRegressor(min_samples=min(len(X),ransac_samples))
+        ransac.fit(X, y)
+        ransac_lines.append(ransac)
+    lr = linear_model.LinearRegression()
+    lr.fit(X, y)
+    lr_lines.append(lr)
+
     for i in range(len(flat_line_locations)-1):
         line_loc = flat_line_locations[i]
         word_area = image[flat_line_locations[i]:flat_line_locations[i+1]]
@@ -94,17 +119,30 @@ def tiltLines(image, flat_line_locations, margin_height=10):
         # Fit line using all data
         lr = linear_model.LinearRegression()
         lr.fit(X, y)
-
-        # Robustly fit linear model with RANSAC algorithm
-        ransac = linear_model.RANSACRegressor(min_samples=500)
-        ransac.fit(X, y)
-        inlier_mask = ransac.inlier_mask_
-        outlier_mask = np.logical_not(inlier_mask)
-
-        ransac_lines.append(ransac)
         lr_lines.append(lr)
 
-    return ransac_lines
+        if use_ransac:
+            # Robustly fit linear model with RANSAC algorithm
+            ransac = linear_model.RANSACRegressor(min_samples=min(len(X),ransac_samples))
+            ransac.fit(X, y)
+            ransac_lines.append(ransac)
+
+    # back edge case
+    word_area = image[flat_line_locations[-1]:]
+    fit_points = np.where(word_area > 0)
+    y = fit_points[0] + flat_line_locations[-1]
+    X = fit_points[1].reshape(-1,1) 
+    if use_ransac:
+        ransac = linear_model.RANSACRegressor(min_samples=min(len(X),ransac_samples))
+        ransac.fit(X, y)
+        ransac_lines.append(ransac)
+        return ransac_lines
+    lr = linear_model.LinearRegression()
+    lr.fit(X, y)
+    lr_lines.append(lr)
+
+    print("Found {} lines".format(len(lr_lines)))
+    return lr_lines
 
 
 
@@ -160,6 +198,16 @@ def smartHorizontalLines(image, approx_start=0):
 
     return lows
 
+
+
+def calculateLineHeight(line_locations):
+    total_diff = 0
+    n_lines = 0
+    for i in range(len(line_locations)-1):
+        total_diff += (line_locations[i+1] - line_locations[i])
+        n_lines += 1
+
+    return int(total_diff / n_lines)
 
 
 
@@ -224,6 +272,7 @@ def getVerticalLines(line_image, approx_start=75, approx_end=1640, n_words=0):
 
 
     return to_return 
+
 
 
 
