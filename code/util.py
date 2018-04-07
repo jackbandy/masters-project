@@ -4,6 +4,7 @@ Utility operations
 '''
 
 from scipy import misc
+from skimage.transform import resize
 from PIL import Image, ImageOps
 import pickle
 import PIL.ImageOps
@@ -12,6 +13,114 @@ import imageio
 import os
 import matplotlib.pyplot as plt
 import cv2
+import collections
+
+
+
+def buildDataset(words, n_words):
+    """Process raw inputs into a dataset.
+    http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/"""
+    count = [['UNK', -1]]
+    count.extend(collections.Counter(words).most_common(n_words - 1))
+    dictionary = dict()
+    for word, _ in count:
+        dictionary[word] = len(dictionary)
+    data = list()
+    unk_count = 0
+    for word in words:
+        if word in dictionary:
+            index = dictionary[word]
+        else:
+            index = 0  # dictionary['UNK']
+            unk_count += 1
+        data.append(index)
+    count[0][1] = unk_count
+    reversed_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
+    return data, count, dictionary, reversed_dictionary
+
+
+
+def getPixelFeatsForSamples(samples):
+    features = []
+    for s in samples:
+        features.append(s.flatten())
+
+    return np.array(features)
+
+
+
+def getHandFeatsForSamples(samples):
+    features = []
+    for s in samples:
+        s_features = []
+
+        # global features
+        mean_val = np.mean(s) 
+        s_features.append(mean_val)
+        max_val = np.max(s)
+        s_features.append(max_val)
+        std_val = np.std(s)
+        s_features.append(std_val)
+
+        # vertical profile features
+        vertical = np.sum(s, axis=0)
+        v_mean = np.mean(vertical)
+        s_features.append(v_mean)
+        v_max = np.max(vertical)
+        s_features.append(v_max)
+        v_std = np.std(vertical)
+        s_features.append(v_std)
+        v_cross = meanCrossRate(vertical, v_mean)
+        s_features.append(v_cross)
+
+        # horizontal profile features
+        horizontal = np.sum(s, axis=1)
+        h_mean = np.mean(horizontal)
+        s_features.append(h_mean)
+        h_max = np.max(horizontal)
+        s_features.append(h_max)
+        h_std = np.std(horizontal)
+        s_features.append(h_std)
+        h_cross = meanCrossRate(horizontal, h_mean)
+        s_features.append(h_cross)
+
+        features.append(s_features)
+
+    return np.array(features)
+
+
+def meanCrossRate(signal, mean):
+    crosses = 0
+    for i in range(1,len(signal)):
+        if signal[i-1] < mean and signal[i] > mean:
+            crosses += 1
+        elif signal[i-1] > mean and signal[i] < mean:
+            crosses += 1
+
+    return (crosses / len(signal))
+
+
+def getHogForSamples(samples):
+    winSize = (64,64)
+    blockSize = (16,16)
+    blockStride = (16,16)
+    cellSize = (8,8)
+    nbins = 9
+    derivAperture = 1
+    winSigma = 4.
+    histogramNormType = 0
+    L2HysThreshold = 2.0000000000000001e-01
+    gammaCorrection = 0
+    nlevels = 64
+    hog_array = []
+    hog = cv2.HOGDescriptor()
+    for s in samples:
+        im = cv2.cvtColor(s, cv2.COLOR_GRAY2BGR)
+        h = hog.compute(im)
+        hog_array.append(np.flatten(h))
+
+    return np.array(hog_array)
+
 
 
 def loadRawImage(file_path):
@@ -87,7 +196,7 @@ def saveImagesWithLabels(images, labels, directory='predictions'):
 
 
 
-def collectSamples(directory, invert=True, binarize=True):
+def collectSamples(directory, invert=True, binarize=True, scale_to_fill=False):
     file_names = os.listdir(directory)
     file_names.sort()
     images = []
@@ -120,9 +229,75 @@ def collectSamples(directory, invert=True, binarize=True):
             dtype=np.float32)
     print("Organizing image samples...")
     for i in range(len(images)):
+        if scale_to_fill:
+            scaled_im = resize(images[i], (max_height, max_width))
+            white_val = np.max(scaled_im)
+            scaled_im = np.where(scaled_im > 0, white_val, 0)
+            all_images[i] = scaled_im
         im = images[i]
         top = int((max_height - im.shape[0]) / 2)
         left = int((max_width - im.shape[1]) / 2)
         all_images[i, top:top+im.shape[0], left:left+im.shape[1]] = im
 
     return all_images, max_height, max_width
+
+
+
+#https://github.com/benhamner/Metrics/blob/master/Python/ml_metrics/average_precision.py
+def apk(actual, predicted, k=10):
+    """
+    Computes the average precision at k.
+    This function computes the average prescision at k between two lists of
+    items.
+    Parameters
+    ----------
+    actual : list
+             A list of elements that are to be predicted (order doesn't matter)
+    predicted : list
+                A list of predicted elements (order does matter)
+    k : int, optional
+        The maximum number of predicted elements
+    Returns
+    -------
+    score : double
+            The average precision at k over the input lists
+    """
+    if len(predicted)>k:
+        predicted = predicted[:k]
+
+    score = 0.0
+    num_hits = 0.0
+
+    for i,p in enumerate(predicted):
+        if p == actual[i]:
+            num_hits += 1.0
+            score += num_hits / (i+1.0)
+
+    if actual is None:
+        return 0.0
+
+    return score / min(len(actual), k)
+
+
+
+def mapk(actual, predicted, k=10):
+    """
+    Computes the mean average precision at k.
+    This function computes the mean average prescision at k between two lists
+    of lists of items.
+    Parameters
+    ----------
+    actual : list
+             A list of lists of elements that are to be predicted
+             (order doesn't matter in the lists)
+    predicted : list
+                A list of lists of predicted elements
+                (order matters in the lists)
+    k : int, optional
+        The maximum number of predicted elements
+    Returns
+    -------
+    score : double
+            The mean average precision at k over the input lists
+    """
+    return np.mean([apk(a,p,k) for a,p in zip(actual, predicted)])
