@@ -5,6 +5,7 @@ Utility operations
 
 from scipy import misc
 from skimage.transform import resize
+from skimage import feature
 from PIL import Image, ImageOps
 import pickle
 import PIL.ImageOps
@@ -14,6 +15,7 @@ import os
 import matplotlib.pyplot as plt
 import cv2
 import collections
+from keras.models import load_model
 
 
 
@@ -48,6 +50,18 @@ def getPixelFeatsForSamples(samples, scale=1):
         features.append(s.flatten())
 
     return np.array(features)
+
+
+
+def getVAEFeatsForSamples(samples, vae_encoder_path):
+    encoder = load_model(vae_encoder_path)
+    im_height = samples.shape[1]
+    im_width = samples.shape[2]
+    white_val = np.max(samples)
+    input_images = samples.reshape(samples.shape[0], im_height, im_width, 1)/white_val
+    encoded = encoder.predict(input_images)
+    encoded = np.reshape(encoded, (encoded.shape[0], -1))
+    return encoded
 
 
 
@@ -91,6 +105,7 @@ def getHandFeatsForSamples(samples):
     return np.array(features)
 
 
+
 def meanCrossRate(signal, mean):
     crosses = 0
     for i in range(1,len(signal)):
@@ -102,25 +117,15 @@ def meanCrossRate(signal, mean):
     return (crosses / len(signal))
 
 
-def getHogForSamples(samples):
-    winSize = (64,64)
-    blockSize = (16,16)
-    blockStride = (16,16)
-    cellSize = (8,8)
-    nbins = 9
-    derivAperture = 1
-    winSigma = 4.
-    histogramNormType = 0
-    L2HysThreshold = 2.0000000000000001e-01
-    gammaCorrection = 0
-    nlevels = 64
-    hog_array = []
-    hog = cv2.HOGDescriptor()
-    for s in samples:
-        im = cv2.cvtColor(s, cv2.COLOR_GRAY2BGR)
-        h = hog.compute(im)
-        hog_array.append(np.flatten(h))
 
+def getHogForSamples(samples, scale=1):
+    hog_array = []
+    for s in samples:
+        if scale != 1:
+            s = resize(s, (int(s.shape[0]/scale), int(s.shape[1]/scale)))
+        f = feature.hog(s, orientations=9, pixels_per_cell=(8,8),
+                cells_per_block=(2,2), feature_vector=True)
+        hog_array.append(f)
     return np.array(hog_array)
 
 
@@ -219,12 +224,10 @@ def collectSamples(directory, invert=True, binarize=True, scale_to_fill=False):
         if im.shape[1] > max_width:
             max_width = im.shape[1]
 
-    print("OLD max_width is {}, max_height is {}".format(max_width, max_height))
     while max_width % 16 != 0:
         max_width += 1
     while max_height % 16 != 0:
         max_height += 1
-    print("NEW max_width is {}, max_height is {}".format(max_width, max_height))
 
     # second loop: center all images in a numpy array
     all_images = np.zeros((len(images), max_height, max_width),

@@ -13,30 +13,48 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import pairwise_distances
 import pdb
 
-
+'''
+# GW data
 normal_images_path = '../gw-data/data/word_images_normalized/'
 damaged_images_path = '../gw-data/data/word_images_damaged/'
-model_path = 'vae_encoder_20epochs_8neurons.h5'
-cluster_path = 'labeled_clusters.npy'
-#clusterer_path = 'kmeans_50epochs_50clusters.sav'
-clusterer_path = 'kmeans_20epochs_2200clusters.sav'
+reconstructed_images_path = '../gw-data/data/damaged_word_images_reconstructed/'
+encoder_path = 'vae_encoder_gw_20epochs_8neurons.h5'
 ground_truth_path = '../gw-data/ground_truth/just_words.txt'
+
+# Wycliffe data
+normal_images_path = '../data/data/first_page_samples/'
+ground_truth_path = '../data/ground_truth/just_words.txt'
+
+# PZ data
+normal_images_path = '../pz-data/data/word_images_normalized/'
+damaged_images_path = '../pz-data/data/word_images_damaged/'
+reconstructed_images_path = '../pz-data/data/damaged_word_images_reconstructed/'
+encoder_path = 'vae_encoder_dmpz_20epochs_16neurons.h5'
+ground_truth_path = '../pz-data/ground_truth/words_only.txt'
+'''
+
+# WY data
+normal_images_path = '../data/first_page_samples/'
+reconstructed_images_path = '../data/word_images_reconstructed/'
+encoder_path = 'vae_encoder_wy_100epochs_16neurons.h5'
+ground_truth_path = '../data/words_only.txt'
+
 
 
 def main():
-    print("apk for damaged scaled pixels:\n {}".format(evaluateForData(damaged_images_path, feats='pixels2')))
-    print("apk for damaged pixels:\n {}".format(evaluateForData(damaged_images_path, feats='pixels')))
-    print("apk for damaged:\n {}".format(evaluateForData(damaged_images_path)))
-    print("apk for data scaled pixels:\n {}".format(evaluateForData(normal_images_path, feats='pixels2')))
-    print("apk for data pixels:\n {}".format(evaluateForData(normal_images_path, feats='pixels')))
-    print("apk for data:\n {}".format(evaluateForData(normal_images_path)))
+    #print("apk for damaged pixels:\n {}".format(evaluateForData(damaged_images_path, feats='pixels2')))
+    #print("apk for damaged hog:\n {}".format(evaluateForData(damaged_images_path, feats='hog')))
+    #print("apk for damaged scaled hog:\n {}".format(evaluateForData(damaged_images_path, feats='hog2')))
+    print("p@5, map for normal data vae:\n {}".format(evaluateForData(normal_images_path, feats='vae', distance_metric='cosine')))
+    print("p@5, map for normal data hog:\n {}".format(evaluateForData(normal_images_path, feats='hog2', distance_metric='cosine')))
+    print("p@5, map for reconstructed data vae:\n {}".format(evaluateForData(reconstructed_images_path, feats='vae', distance_metric='cosine')))
+    print("p@5, map for reconstructed data hog:\n {}".format(evaluateForData(reconstructed_images_path, feats='hog2', distance_metric='cosine')))
 
 
 
-def evaluateForData(images_path, feats='hand'):
+def evaluateForData(images_path, feats='hand', distance_metric='euclidean'):
     # initialization
-    samples, height, width = util.collectSamples(images_path, binarize=False,
-            scale_to_fill=True)
+    samples, height, width = util.collectSamples(images_path, binarize=False, scale_to_fill=True)
 
 
     # first, get features
@@ -46,6 +64,12 @@ def evaluateForData(images_path, feats='hand'):
         sample_features = util.getPixelFeatsForSamples(samples)
     elif feats=='pixels2':
         sample_features = util.getPixelFeatsForSamples(samples, scale=2)
+    elif feats=='hog':
+        sample_features = util.getHogForSamples(samples)
+    elif feats=='hog2':
+        sample_features = util.getHogForSamples(samples, scale=2)
+    elif feats=='vae':
+        sample_features = util.getVAEFeatsForSamples(samples, vae_encoder_path=encoder_path)
     print("Samples shape: {}".format(sample_features.shape))
 
 
@@ -60,11 +84,13 @@ def evaluateForData(images_path, feats='hand'):
 
     # calculate distance matrix!
     print("Calculating pairwise distances...")
-    distances = pairwise_distances(sample_features)
-    print("distances shape: {}".format(distances.shape))
+    distances = pairwise_distances(sample_features, metric=distance_metric)
 
     # for each image
     apk_total = 0.0
+    apk_count = 0
+    pa5_total = 0.0
+    pa5_count = 0
     for i in range(n_words):
         n = 5  # find the n closest feature vectors
         dist_to_words = distances[i]
@@ -72,11 +98,18 @@ def evaluateForData(images_path, feats='hand'):
         # trim off the match with itself
         closest_n_inds = dist_to_words.argsort()[:n]
         actual = sample_gt_np[closest_n_inds]
-        pred = [word_to_int[words[i]]]*n
+        pred = [word_id]*n
 
         occurences = min(n,sample_gt.count(word_id))
-        apk = util.apk(actual, pred, k=occurences)
-        apk_total += apk
+        if occurences > 4:
+            pa5_count += 1
+            pa5_total += actual.tolist().count(word_id) / 5
+
+        w_k = max(1,sample_gt.count(word_id))
+        if w_k > 1:
+            apk = util.apk(actual, pred, k=w_k)
+            apk_total += apk
+            apk_count += 1
         '''
         print("--")
         print("Actual: {}".format(actual))
@@ -85,8 +118,9 @@ def evaluateForData(images_path, feats='hand'):
         print("apk at word {}:{:.3f} \r".format(i,apk))
         '''
 
-    average_apk = apk_total / n_words
-    return average_apk
+    average_pa5 = pa5_total / pa5_count
+    average_apk = apk_total / apk_count
+    return average_pa5, average_apk
 
 
 
