@@ -295,21 +295,26 @@ A more useful approach would allow users to label ``interesting'' words. In some
 
 
 %
-% Transcription
+% Evaluation
 %
-\section{Transcription}
-Although the system was designed for word retrieval, a transcription of the full set of word images can be given at any time. Each word image is compared to the nearest labeled word image, and if the euclidean distance is below a threshold, it is considered to be a match. Word images that are too far away from any labeled image will show up in the transcript as ``unknown." 
+\section{Evaluation}
+Unique metrics are used to objectively evaluate word spotting methods. Most of these metrics are primarily concerned with the {\em precision} of the results. In other words, when a word is queried and the system provides a list of matching word images, the matches are evaluated based on whether those results are correct, and not based on whether it missed other matches in the data.
 
+\subsection{Precision at K}
+The precision at k metric is one of the most widely used.
+
+\subsection{Mean Average Precision}
+The mean average precision is an extension of the precision at K metric.
 
 
 
 %%
 %
 %
-% Evaluation Chapter
+% Results Chapter
 %
 %%
-\chapter{Evaluation}
+\chapter{Results}
 The main goal in evaluating the system was to determine whether the VAE could reconstruct damaged words so as to accurately classify them during word spotting.
 
 %
@@ -348,12 +353,14 @@ Results from experiments on GW.
 \centering
 \caption{George Washington Results}
 \label{my-label}
-\begin{tabular}{llll}
-\textbf{Data }  & \textbf{VAE  } & \textbf{P@5  } & \textbf{MAP } \\
-Original Parzival    & No                 & 0.0 & 0.0 \\
-Original Parzival    & Yes                & 0.0 & 0.0 \\
-``Damaged" Parzival  & No                 & 0.0 & 0.0 \\
-``Damaged'' Parzival & Yes                & 0.0 & 0.0
+\begin{tabular}{lllll}
+\textbf{Data}  & \textbf{Feature Method} & \textbf{VAE Reconstruction} & \textbf{P@5} & \textbf{MAP} \\
+Original GW    & Template Matching       & No                          & 0.0          & 0.0          \\
+Original GW    & VAE Encoding            & No                          & 0.0          & 0.0          \\
+``Damaged'' GW & Template Matching       & No                          & 0.0          & 0.0          \\
+``Damaged'' GW & Template Matching       & Yes                         & 0.0          & 0.0          \\
+``Damaged'' GW & VAE Encoding            & No                          & 0.0          & 0.0          \\
+``Damaged'' GW & VAE Encoding            & Yes                         & 0.0          & 0.0         
 \end{tabular}
 \end{table}
 
@@ -371,12 +378,14 @@ Results from experiments on Parzival.
 \centering
 \caption{Parzival Results}
 \label{my-label}
-\begin{tabular}{llll}
-\textbf{Data }  & \textbf{VAE  } & \textbf{P@5  } & \textbf{MAP  } \\
-Original Parzival    & No                 & 0.0 & 0.0 \\
-Original Parzival    & Yes                & 0.0 & 0.0 \\
-``Damaged" Parzival  & No                 & 0.0 & 0.0 \\
-``Damaged'' Parzival & Yes                & 0.0 & 0.0
+\begin{tabular}{lllll}
+\textbf{Data}  & \textbf{Feature Method} & \textbf{VAE Reconstruction} & \textbf{P@5} & \textbf{MAP} \\
+Original Parzival    & Template Matching       & No                          & 0.0          & 0.0          \\
+Original Parzival    & VAE Encoding            & No                          & 0.0          & 0.0          \\
+``Damaged'' Parzival & Template Matching       & No                          & 0.0          & 0.0          \\
+``Damaged'' Parzival & Template Matching       & Yes                         & 0.0          & 0.0          \\
+``Damaged'' Parzival & VAE Encoding            & No                          & 0.0          & 0.0          \\
+``Damaged'' Parzival & VAE Encoding            & Yes                         & 0.0          & 0.0         
 \end{tabular}
 \end{table}
 

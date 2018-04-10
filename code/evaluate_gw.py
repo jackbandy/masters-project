@@ -14,7 +14,8 @@ from sklearn.metrics.pairwise import pairwise_distances
 import pdb
 
 
-images_path = '../gw-data/data/word_images_normalized/'
+normal_images_path = '../gw-data/data/word_images_normalized/'
+damaged_images_path = '../gw-data/data/word_images_damaged/'
 model_path = 'vae_encoder_20epochs_8neurons.h5'
 cluster_path = 'labeled_clusters.npy'
 #clusterer_path = 'kmeans_50epochs_50clusters.sav'
@@ -23,14 +24,28 @@ ground_truth_path = '../gw-data/ground_truth/just_words.txt'
 
 
 def main():
+    print("apk for damaged scaled pixels:\n {}".format(evaluateForData(damaged_images_path, feats='pixels2')))
+    print("apk for damaged pixels:\n {}".format(evaluateForData(damaged_images_path, feats='pixels')))
+    print("apk for damaged:\n {}".format(evaluateForData(damaged_images_path)))
+    print("apk for data scaled pixels:\n {}".format(evaluateForData(normal_images_path, feats='pixels2')))
+    print("apk for data pixels:\n {}".format(evaluateForData(normal_images_path, feats='pixels')))
+    print("apk for data:\n {}".format(evaluateForData(normal_images_path)))
+
+
+
+def evaluateForData(images_path, feats='hand'):
     # initialization
     samples, height, width = util.collectSamples(images_path, binarize=False,
             scale_to_fill=True)
 
 
     # first, get features
-    #sample_features = util.getPixelFeatsForSamples(samples)
-    sample_features = util.getHandFeatsForSamples(samples)
+    if feats=='hand':
+        sample_features = util.getHandFeatsForSamples(samples)
+    elif feats=='pixels':
+        sample_features = util.getPixelFeatsForSamples(samples)
+    elif feats=='pixels2':
+        sample_features = util.getPixelFeatsForSamples(samples, scale=2)
     print("Samples shape: {}".format(sample_features.shape))
 
 
@@ -62,14 +77,16 @@ def main():
         occurences = min(n,sample_gt.count(word_id))
         apk = util.apk(actual, pred, k=occurences)
         apk_total += apk
+        '''
         print("--")
         print("Actual: {}".format(actual))
         print("Pred: {}".format(pred))
         print("Occurs: {}".format(occurences))
         print("apk at word {}:{:.3f} \r".format(i,apk))
+        '''
 
     average_apk = apk_total / n_words
-    print("Average apk: {:.3f}".format(average_apk))
+    return average_apk
 
 
 

@@ -40,9 +40,11 @@ def buildDataset(words, n_words):
 
 
 
-def getPixelFeatsForSamples(samples):
+def getPixelFeatsForSamples(samples, scale=1):
     features = []
     for s in samples:
+        if scale != 1:
+            s = resize(s, (int(s.shape[0]/scale), int(s.shape[1]/scale)))
         features.append(s.flatten())
 
     return np.array(features)
@@ -226,7 +228,7 @@ def collectSamples(directory, invert=True, binarize=True, scale_to_fill=False):
 
     # second loop: center all images in a numpy array
     all_images = np.zeros((len(images), max_height, max_width),
-            dtype=np.float32)
+            dtype=np.uint8)
     print("Organizing image samples...")
     for i in range(len(images)):
         if scale_to_fill:

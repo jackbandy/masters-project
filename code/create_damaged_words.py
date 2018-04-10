@@ -31,7 +31,7 @@ def main():
         else:
             # damage!
             damaged_count +=1
-            damage_index = np.random.randint(1,6)
+            damage_index = np.random.randint(3,9)
             damaged_samples[i] = damageSample(samples[i], damage_index)
 
     # save loop
@@ -44,14 +44,14 @@ def main():
 
 
 
-def damageSample(sample, index):
+def damageSample(sample, index, min_area=24, max_area=33):
     to_return = sample
     for _ in range(index):
         candidates = np.where(to_return > 0)
         if candidates[0].shape[0] == 0:
             return sample
-        dam_width = np.random.randint(6,17)
-        dam_height = np.random.randint(6,17)
+        dam_width = np.random.randint(min_area,max_area)
+        dam_height = np.random.randint(min_area,max_area)
         dam_location = np.random.randint(0,candidates[0].shape[0])
         dam_row = candidates[0][dam_location]
         dam_col = candidates[1][dam_location]

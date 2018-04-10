@@ -87,6 +87,9 @@ class Application(tk.Frame):
 
 
 
+    def searchForMatches(self, image_to_match, images_to_search):
+        pass
+
     
     def chooseImageForLabel(self):
         print("Choosing new image...")

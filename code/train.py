@@ -15,21 +15,26 @@ import matplotlib.pyplot as plt
 import util, cluster
 import imageio
 
-EPOCHS = [20]
-N_CLUSTERS = [1800,2000,2200]
-NEURON_COUNT = [8,16]
+EPOCHS = [10]
+NEURON_COUNT = [8]
 
 
 
 def main():
     for ep in EPOCHS:
         for nc in NEURON_COUNT:
-            run_instance(ep, N_CLUSTERS, nc)
+            run_instance(ep, nc)
 
 
-def run_instance(epochs, N_CLUSTERS, neuron_count):
-    training_samples_path = '../gw-data/data/word_images_normalized/'
-    vae_save_path = 'vae_encoder_{}epochs.h5'.format(epochs)
+def run_instance(epochs, neuron_count):
+    training_samples_path = '../gw-data/data/word_images_damaged/'
+    output_images_path = '../gw-data/data/damaged_word_images_reconstructed/'
+    vae_encoder_save_path = 'vae_encoder_gw_{}epochs_{}neurons.h5'.format(epochs, neuron_count)
+    vae_save_path = 'vae_gw_{}epochs_{}neurons.h5'.format(epochs, neuron_count)
+    if not (os.path.isdir(output_images_path)):
+        os.mkdir(output_images_path)
+    file_names = os.listdir(training_samples_path)
+    file_names.sort()
 
     # step 1: load in the samples
     training_images, im_height, im_width =util.collectSamples(training_samples_path, binarize=False, invert=True)
@@ -38,48 +43,50 @@ def run_instance(epochs, N_CLUSTERS, neuron_count):
     print("White value is {}".format(white_val))
     training_images = training_images.reshape(n_samples, im_height, im_width,
             1) / white_val
-
     print("Collected {} images...".format(n_samples))
 
     # step 2: build and train the model
     print("Training network...")
     neuron_array = [4,4,8,neuron_count]
+    validation_images = np.random.permutation(training_images)[:20]
     vae = buildNetwork(input_height=im_height, input_width=im_width, neurons=neuron_array)
     vae.compile(optimizer='adadelta',loss='binary_crossentropy')
     vae.fit(training_images, training_images,
             epochs=epochs,
-            batch_size=10,
+            batch_size=30,
             shuffle=True,
-            validation_data=(training_images, training_images),
+            validation_data=(validation_images, validation_images),
     )
             
 
     # step 3: visualize results
     print("Saving results from vae...")
-    predict_images = np.random.permutation(training_images)
-    output_ims = vae.predict(predict_images)
+    #output_ims = vae.predict(training_images)
+    #predict_images = np.random.permutation(training_images)
+    output_ims = vae.predict(training_images)
     n = 10
-    #plt.figure(figsize=(8,4))
-    instance_dir = 'results-{}epochs-{}neurons'.format(epochs, neuron_count)
-    os.mkdir(instance_dir)
-    for i in range(n):
+    print("Saving images...")
+    for i in range(n_samples):
         # original
         #ax = plt.subplot(2, n, i+1)
         #plt.imshow(predict_images[i].reshape(im_height, im_width))
         #plt.gray()
-        imageio.imwrite(instance_dir+'/{}-raw.png'.format(i), predict_images[i])
-        imageio.imwrite(instance_dir+'/{}-rec.png'.format(i), output_ims[i])
+        inv = util.invertImage(output_ims[i])
+        imageio.imwrite(output_images_path+'/{}.png'.format(file_names[i]), inv)
         #ax = plt.subplot(2, n, i+n+1)
         #plt.imshow(output_ims[i].reshape(im_height, im_width))
         #plt.gray()
     #plt.savefig('results-{}epochs-{}clusters-{}neurons.png'.format(epochs, n_clusters, neuron_count))
     #plt.clf()
+    print("Saving networks...")
+    intermediate_layer_model = Model(inputs=vae.input, outputs=vae.layers[8].output)
+    intermediate_layer_model.save(vae_encoder_save_path)
+    vae.save(vae_save_path)
 
 
+    '''
     # step 4: cluster
     print("Building a cluster model...")
-    intermediate_layer_model = Model(inputs=vae.input, outputs=vae.layers[8].output)
-    intermediate_layer_model.save(vae_save_path)
     encoded = intermediate_layer_model.predict(predict_images)
     encoded = np.reshape(encoded, (encoded.shape[0], -1))
 
@@ -93,6 +100,7 @@ def run_instance(epochs, N_CLUSTERS, neuron_count):
         #util.saveImagesWithLabels(images=predict_images, labels=labels,directory='test-labels')
         cluster.saveClusters(centroids=kmeans.cluster_centers_)
         cluster.saveClusterer(model=kmeans, file_path=kmeans_save_path)
+    '''
        
 
 
