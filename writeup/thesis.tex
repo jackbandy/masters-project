@@ -1,5 +1,6 @@
 \documentclass[final]{ukthesis}
 %you must include these 2 packages.
+\usepackage{amsmath}
 \usepackage[pdfauthor={Jack Bandy},
             pdftitle={The Title},
             pdfsubject={The Subject},
@@ -129,7 +130,7 @@ An ideal solution would leverage automated transcription for the undamaged porti
 \begin{center}
 \includegraphics[width=14cm]{hcml-schematic}
 \end{center}
-\caption{A schematic diagram from \cite{schaekermann2016resolvable} for semi-automated transcription. This  framework is designed especially for resolving ambiguity, which is not the focus of my project. Nonetheless, this diagram depicts a collaborative framework betwee machine learning and human annotation.}
+\caption{A schematic diagram from \cite{schaekermann2016resolvable} for semi-automated transcription, designed especially for resolving ambiguity. Although resolving ambiguity is not the focus of my project, this diagram depicts a collaborative framework between machine learning and human annotation.}
 \label{fig:hcml-schematic}
 \end{figure}
 
@@ -226,7 +227,7 @@ Once the system finds local minimums in the profile, it checks whether their val
 
 \begin{center}
 \begin{math}
-mean(P) - \frac{stdev(P)}{2}
+mean(P) - \cfrac{stdev(P)}{2}
 \end{math}
 \end{center}
 
@@ -236,13 +237,13 @@ where {\em P} is the horizontal projection profile of the text line.
 \subsection{Damage Simulation}
 The George Washington and Parzival datasets exist in fairly high quality. To demonstrate the system's ability to handle damaged datasets, simulated damage was performed on the word images. A simple approach was used, and works as follows.
 
-One half of the images in the dataset are chosen at random to be ``damaged." Each of these images is treated with a random number of damage blocks, at least one and at most five. Each damage block is a rectangle of random height and width, from six pixels to sixteen pixels. The damage block is centered at a random nonzero pixel in the image, and each pixel contained in the block is set to zero. Different examples of damage simulation are shown in figure \ref{fig:damage-simulation}.
+One half of the images in the dataset are chosen at random to be ``damaged." Each of these images is treated with a random number of damage blocks, at least two and at most eight. Each damage block is a rectangle of random height and width, from sixteen pixels to thirty pixels. The damage block is centered at a random nonzero pixel in the image, and each pixel contained in the block is set to zero. Different examples of damage simulation are shown in figure \ref{fig:damage-simulation}.
 
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=4cm]{placeholder}
+\includegraphics[width=8cm]{damage-simulation}
 \end{center}
-\caption{An undamaged word (left) and the same word after applying one damage block (middle) and three damage blocks (right).}
+\caption{An original word image from the George Washington dataset (left), and the same word after applying damage blocks to simulate ink deterioration (right).}
 \label{fig:damage-simulation}
 \end{figure}
 
@@ -250,7 +251,7 @@ One half of the images in the dataset are chosen at random to be ``damaged." Eac
 \subsection{Feature Extraction}
 Histogram of oriented gradients (HoG) features were used as features for the images. Although more advanced features are available that result in better accuracy, the goal was to apply a proven technique that would provide adequate baseline performance. This portion of the system is modular, so an improved feature extraction system would be straightforward to implement.
 
-HoG features were extracted using a scikit-image implementation \cite{van2014scikit}. The results in this paper were achieved using a HoG descriptor with 9 orientation bins, a cell size of 6pixels x 6pixels, 3x3 cells per block, and L1 normalization.
+HoG features were extracted using a scikit-image implementation \cite{van2014scikit}. The results in this paper were achieved using a HoG descriptor with 9 orientation bins, a cell size of 16pixels x 16pixels, 2x2 cells per block, and L1 normalization.
 
 
 
@@ -259,11 +260,11 @@ HoG features were extracted using a scikit-image implementation \cite{van2014sci
 %
 \section{Variational Autoencoder}
 
-The purpose of the Variational Autoencoder (VAE) \cite{kingma2013auto} in this system is to learn an encoded representation of word images, without the need for ground truth label, which can be used to recreate the word image. The VAE can be seen as an enhancement phase before word retrieval.
+The purpose of the Variational Autoencoder (VAE) \cite{kingma2013auto} in this system is to learn an encoded representation of word images, without the need for ground truth label. After being trained, the VAE can be used to encode word images into features, as well as provide enhancement of damaged words before matching takes place.
 
 The VAE is an unsupervised generative technique. In this case, the VAE works on top of a convolutional neural network and is trained using stochastic gradient descent. As a generative model, its job ``is to somehow capture the dependencies between pixels" \cite{doersch2016tutorial}. After proper training, the VAE should be able to take an input image, create an encoded representation of that image, and then generate a similar image using only the encoding.
 
-For example, an ideal VAE trained on the MNIST dataset would learn an encoding that captured the digits 0 to 9. This part of the network is referred to as the latent variable. The latent variables are used to decide which class of output is desired. If latent variables corresponded to a 1, the decoding portion of the network would generate output that resembled a 1. The structure of the VAE and its overall process is visualized in figure \ref{fig:vaedemo}.
+For example, an idealized VAE trained on the MNIST dataset would learn an encoding that captured the digits 0 to 9. This encoded layer of the network is referred to as the latent variable, and the latent variables are used to decide which class of output should be generated. If latent variables corresponded to a 1, the decoding portion of the network would generate output that resembled a 1. The structure of the VAE and its overall process is visualized in figure \ref{fig:vaedemo}.
 
 The VAE trains on each dataset separately, so that separate models are created for the George Washington dataset, the Parzival dataset, and the Wycliffe dataset. In the evaluation chapter, these models generate ``restored" versions of the word images before word retrieval takes place, and results are compared to the non-restored word image set.
 
@@ -301,11 +302,23 @@ A more useful approach would allow users to label ``interesting'' words. In some
 Unique metrics are used to objectively evaluate word spotting methods. Most of these metrics are primarily concerned with the {\em precision} of the results. In other words, when a word is queried and the system provides a list of matching word images, the matches are evaluated based on whether those results are correct, and not based on whether it missed other matches in the data.
 
 \subsection{Precision at K}
-The precision at k metric is one of the most widely used.
+The precision at k ({\em P@k}) metric is one of the most widely used for evaluating word spotting methods. P@k determines the precision for the {\em k} top retrieved words, or the relevance of the {\em k} top retrieved words.
+\begin{center}
+\begin{math}
+{P@k}=\cfrac{\mid\{relevant\ instances\}\cap\{k\ retrieved\ instances\}\mid} {\mid \{k\ retrieved\ instances\}\mid}
+\end{math}
+\end{center}
 
 \subsection{Mean Average Precision}
-The mean average precision is an extension of the precision at K metric.
+The mean average precision ({\em MAP}) is the most popular evaluation protocol for word spotting. A recent review \cite{giotis2017survey} of nearly 200 papers in word spotting tracked the evaluation metric used in each paper, and conclusively found {\em MAP} to be dominant. The formal definition for {\em Average Precision} is as follows:
 
+\begin{center}
+\begin{math}
+{AP}=\cfrac{\sum_{k=1}^n (P@k\ \times rel(k))}{\mid\{relevant \ instances\}\mid}
+\end{math}
+\end{center}
+
+{\em MAP} is the mean value of {\em AP} over all queries. The metric rewards systems that properly sort results according to relevance. If two systems each have three relevant results in the top five matches, they can still produce different scores. Specifically, if one system front-loads the relevant results while the other fails to do so, the former system will produce a better MAP score.
 
 
 %%
@@ -321,8 +334,21 @@ The main goal in evaluating the system was to determine whether the VAE could re
 % Data Background Section
 %
 \section{Datasets}
-Three datasets were used to evaluate the interactive approach to word recognition and ink restoration. The first two are benchmark datasets from the literature.
+Three datasets were used to evaluate the interactive approach to word recognition and ink restoration. The first two are benchmark datasets from the literature, and the third is a custom scan of a publicly available document.
 
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lllll}
+\textbf{Dataset}  & \textbf{Year} & \textbf{Medium}  & \textbf{Words} & \textbf{Unique Words} \\
+\hline
+George Washington & 1755                  & Ink on paper     & 4,894          & 1,471                 \\
+Parzival          & 1200s                 & Ink on parchment & 23,478         & 4,934                 \\
+Wycliffe*         & 1388                  & Ink on parchment & 310            & 143                  
+\end{tabular}
+\caption{Summary table of the datasets used for evaluation. Note the Wycliffe test set is a small subset of the full Wycliffe New Testament.}
+\label{table:datasets}
+\end{table}
 
 \begin{figure}[t]
 \begin{center}
@@ -344,49 +370,50 @@ The Parzival database is a medieval German text from the 13th century which was 
 \subsection{Wycliffe Dataset}
 (\textbf{TODO} add details about Wycliffe acquisition.)
 
+
 %
-% George Washington Results
+% Word Spotting Results
 %
-\section{Classification on George Washington Dataset}
-Results from experiments on GW.
-\begin{table}[]
+\section{Basic Word Spotting}
+The goal of the basic word spoting experiments was to determine whether the latent variables in a VAE could adequately serve as features during word spotting. Table \ref{table:word-spotting} shows that VAE-encoded features outperform histograms of oriented gradients, a widely-used feature in word spotting \cite{giotis2017survey}. Word spotting precision at k=5 (P@5) and mean average precision (MAP) are shown in the table.
+
+\begin{table}[h]
 \centering
-\caption{George Washington Results}
-\label{my-label}
-\begin{tabular}{lllll}
-\textbf{Data}  & \textbf{Feature Method} & \textbf{VAE Reconstruction} & \textbf{P@5} & \textbf{MAP} \\
-Original GW    & Template Matching       & No                          & 0.0          & 0.0          \\
-Original GW    & VAE Encoding            & No                          & 0.0          & 0.0          \\
-``Damaged'' GW & Template Matching       & No                          & 0.0          & 0.0          \\
-``Damaged'' GW & Template Matching       & Yes                         & 0.0          & 0.0          \\
-``Damaged'' GW & VAE Encoding            & No                          & 0.0          & 0.0          \\
-``Damaged'' GW & VAE Encoding            & Yes                         & 0.0          & 0.0         
+\begin{tabular}{llll}
+\textbf{Data}  & \textbf{Feature} & \textbf{P@5} & \textbf{MAP} \\
+\hline
+Original GW    & HoG			& 0.0          & 0.0          \\
+Original GW    & VAE Encoding 	& 0.0          & 0.0          \\
+Original Parzival & HoG                     & 0.0          & 0.0          \\
+Original Parzival & VAE Encoding 	& 0.0          & 0.0          \\
+Original Wycliffe & HoG			& 0.0          & 0.0          \\
+Original Wycliffe & VAE Encoding	& 0.0          & 0.0         
 \end{tabular}
+\caption{Word Spotting Results}
+\label{table:word-spotting}
 \end{table}
 
 
 
 
 %
-% Parzival Results
+% Damaged Data Results
 %
-\section{Classification on Parzival Dataset}
-Results from experiments on Parzival.
-
+\section{Classification on Damaged Datasest}
+The goal of experiments on damaged word images was twofold: first, to determine whether VAE features were more suitable for damaged data, and second, to set a baseline performance to be compared against in the following section.
 
 \begin{table}[h]
 \centering
-\caption{Parzival Results}
-\label{my-label}
-\begin{tabular}{lllll}
-\textbf{Data}  & \textbf{Feature Method} & \textbf{VAE Reconstruction} & \textbf{P@5} & \textbf{MAP} \\
-Original Parzival    & Template Matching       & No                          & 0.0          & 0.0          \\
-Original Parzival    & VAE Encoding            & No                          & 0.0          & 0.0          \\
-``Damaged'' Parzival & Template Matching       & No                          & 0.0          & 0.0          \\
-``Damaged'' Parzival & Template Matching       & Yes                         & 0.0          & 0.0          \\
-``Damaged'' Parzival & VAE Encoding            & No                          & 0.0          & 0.0          \\
-``Damaged'' Parzival & VAE Encoding            & Yes                         & 0.0          & 0.0         
+\begin{tabular}{llll}
+\textbf{Data}  & \textbf{Feature} & \textbf{P@5} & \textbf{MAP} \\
+\hline
+Damaged GW    & HoG			& 0.0          & 0.0          \\
+Damaged GW    & VAE Encoding 	& 0.0          & 0.0          \\
+Damaged Parzival & HoG                     & 0.0          & 0.0          \\
+Damaged Parzival & VAE Encoding 	& 0.0          & 0.0          \\   
 \end{tabular}
+\caption{Results for ``Damaged'' Datasets}
+\label{my-label}
 \end{table}
 
 
@@ -395,12 +422,22 @@ Original Parzival    & VAE Encoding            & No                          & 0
 %
 % Wycliffe Data Results
 %
-\section{Wycliffe New Testament}
-Results from experiments on the Wycliffe dataset (manually annotated section).
+\section{Reconstruction Results}
+Classification on reconstructed data
 
-\begin{center}
-\includegraphics[width=10cm]{placeholder}
-\end{center}
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+\textbf{Data}  & \textbf{Feature} & \textbf{P@5 (change)} & \textbf{MAP (change)} \\
+\hline
+Reconstructed GW    & HoG			& 0.0 (0.0)          & 0.0 (0.0)         \\
+Reconstructed GW    & VAE Encoding 	& 0.0 (0.0)         & 0.0 (0.0)         \\
+Reconstructed Parzival & HoG                     & 0.0 (0.0)         & 0.0 (0.0)         \\
+Reconstructed Parzival & VAE Encoding 	& 0.0 (0.0)         & 0.0 (0.0)         \\
+\end{tabular}
+\caption{Results for Reconstructed Data}
+\label{my-label}
+\end{table}
 
 
 
