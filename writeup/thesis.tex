@@ -272,18 +272,17 @@ The VAE trains on each dataset separately, so that separate models are created f
 The VAE was implemented using Keras \cite{chollet2015keras}, with TensorFlow \cite{abadi2016tensorflow} used as the backend.
 
 \subsection{For Feature Extraction}
-\textbf{TODO} describe how VAEs can extract features.
-
+When using the VAE as a feature extractor, no changes are made to the network architecture: the network receives an input image and performs the convolutional filters just the same as a normal prediction. The only difference is that the network is pruned at the final convolutional layer, or the ``encoded representation'' layer. The output of this layer is flattened into a 1-dimensional feature vector to be used in word spotting.
 
 \subsection{For Restoration}
-\textbf{TODO} describe how VAEs can reconstruct data.
+VAEs have been sued for so-called ``neural inpainting,'' a version of which is used in this project.
 
 
 %
-% Word retrieval Section (super short?)
+% Word retrieval Section
 %
 \section{Word Retrieval}
-The current system employs a simple query-by-example method. This means that the query requires a word image as input, rather than a string. Given a word image as input, the query system calculates the HoG feature vector and compares it to the feature vectors for all other word images. The results are sorted by euclidean distance between vectors, and returned in order of proximity.
+The current system employs a simple query-by-example method. This means that the query requires a word image as input, rather than a string. Given a word image as input, the query system calculates the feature vector and compares it to the feature vectors for all other word images. The results are sorted by the cosine distance between vectors, and returned in order of proximity.
 
 
 
@@ -317,8 +316,11 @@ The precision at k ({\em P@k}) metric is one of the most widely used for evaluat
 \end{math}
 \end{center}
 
+So if k=5, and a query for the word ``october'' returned three instances of ``october'' and two instances of ``octopus,'' the {\em P@5} score score would be \begin{math}\frac{3}{5} = 0.6\end{math} for that query. This project uses P@5, as do most other word spotting papers from the past decade, reviewed in \cite{giotis2017survey}.
+
+
 \subsection{Mean Average Precision}
-The mean average precision ({\em MAP}) is the most popular evaluation protocol for word spotting. A recent review \cite{giotis2017survey} of nearly 200 papers in word spotting tracked the evaluation metric used in each paper, and conclusively found {\em MAP} to be dominant. The formal definition for {\em Average Precision} is as follows:
+The mean average precision ({\em MAP}) is an effective metric to holistically evaluate any word spotting system. A recent review \cite{giotis2017survey} of nearly 200 papers in word spotting tracked the evaluation metric used in each paper, and conclusively found {\em MAP} to be dominant. The formal definition for {\em Average Precision} is as follows:
 
 \begin{center}
 \begin{math}
@@ -326,7 +328,7 @@ The mean average precision ({\em MAP}) is the most popular evaluation protocol f
 \end{math}
 \end{center}
 
-{\em MAP} is the mean value of {\em AP} over all queries. The metric rewards systems that properly sort results according to relevance. If two systems each have three relevant results in the top five matches, they can still produce different scores. Specifically, if one system front-loads the relevant results while the other fails to do so, the former system will produce a better MAP score.
+{\em MAP} is simply the mean value of {\em AP} over all queries. The metric rewards systems that properly sort results according to relevance. If two systems each have three relevant results in the top five matches, they can still produce different scores. For example, if one system puts the relevant results in the top three slots while the other fails to do so, the former system will produce a better MAP score.
 
 
 %%
@@ -336,14 +338,13 @@ The mean average precision ({\em MAP}) is the most popular evaluation protocol f
 %
 %%
 \chapter{Results}
-The main goal in evaluating the system was to determine whether the VAE could reconstruct damaged words so as to accurately classify them during word spotting.
+The evaluation phase sought to determine whether VAE encodings of word images could be used for word spotting, and also if a VAE could reconstruct damaged words so as to more accurately classify them.
 
 %
 % Data Background Section
 %
 \section{Datasets}
-Three datasets were used to evaluate the interactive approach to word recognition and ink restoration. The first two are benchmark datasets from the literature, and the third is a custom scan of a publicly available document.
-
+Three datasets were used to evaluate the VAE-based approach to word recognition and ink restoration. The first two are benchmark datasets from the literature, and the third is a custom scan of a publicly available document. Samples of all three datasets are shown in figure \ref{fig:dataset-samples}.
 
 \begin{table}[h]
 \centering
@@ -378,12 +379,27 @@ The Parzival database is a medieval German text from the 13th century which was 
 \subsection{Wycliffe Dataset}
 The Wycliffe New Testament is a Middle English Bible translation from the 14th century. Numerous copies of Wycliffe's New Testament survive to this day, but the particular manuscript images used in this project were acquired in 2010 from...?
 
+Challenges discussed in section \ref{sec:challenges} explain why this test set was relatively small compared to the full Wycliffe New Testament, even though the system allows query-by-example over the full manuscript.
+
 
 %
 % Word Spotting Results
 %
 \section{Basic Word Spotting}
-The goal of the basic word spoting experiments was to determine whether the latent variables in a VAE could adequately serve as features during word spotting. Table \ref{table:word-spotting} shows that VAE-encoded features outperform histograms of oriented gradients, a widely-used feature in word spotting \cite{giotis2017survey}. Word spotting precision at k=5 (P@5) and mean average precision (MAP) are shown in the table.
+\label{sec:basic-results}
+The goal of the basic word spoting experiments was to determine whether the latent variables in a VAE could adequately serve as features during word spotting. Histogram of oriented gradients (HoG) is a popular feature extraction method for word spotting \cite{giotis2017survey}. Although other optimizations combined with advanced feature extraction produce better results, HoG is a sufficient benchmark with which to compare alternate features.
+
+Table \ref{tab:word-spotting} shows that VAE-encoded features outperform HoG features on all three datasets. Word spotting precision at k=5 (P@5) and mean average precision (MAP) over all queries are shown in the table. Although VAE features offer negligible improvement on the George Washington dataset, it is the decisive winner for the Parzival and Wycliffe sets.
+
+\begin{figure}[t]
+\begin{center}
+\fbox{\includegraphics[height=1.4cm]{gw-word-sample}}
+\fbox{\includegraphics[height=1.4cm]{pz-word-sample}}
+\fbox{\includegraphics[height=1.4cm]{wycliffe-word-sample}}
+\end{center}
+\caption{Sample word images from the George Washington dataset (left), the Parzival dataset (middle), and the Wycliffe dataset (right).}
+\label{fig:word-samples}
+\end{figure}
 
 \begin{table}[h]
 \centering
@@ -398,7 +414,7 @@ Original Wycliffe & HoG			& 0.631          & 0.584          \\
 Original Wycliffe & VAE Encoding	& 0.768          & 0.662         
 \end{tabular}
 \caption{Word Spotting Results}
-\label{table:word-spotting}
+\label{tab:word-spotting}
 \end{table}
 
 
@@ -408,7 +424,21 @@ Original Wycliffe & VAE Encoding	& 0.768          & 0.662
 % Damaged Data Results
 %
 \section{Classification on Damaged Datasest}
+\label{sec:damaged-results}
 The goal of experiments on damaged word images was twofold: first, to determine whether VAE features were more suitable for damaged data, and second, to set a baseline performance to be compared against in the following section.
+
+Table \ref{tab:damaged-results} shows that VAE encoding outperforms HoG on the damaged datasets, even on the George Washington dataset which saw little difference in the previous section.
+
+\begin{figure}[t]
+\begin{center}
+\fbox{\includegraphics[height=1.4cm]{gw-damaged-word-sample}}
+\fbox{\includegraphics[height=1.4cm]{pz-damaged-word-sample}}
+\fbox{\includegraphics[height=1.4cm]{gw-reconstructed-word-sample}}
+\fbox{\includegraphics[height=1.4cm]{pz-reconstructed-word-sample}}
+\end{center}
+\caption{On the top, samples of word images after simulated damage, from the George Washington dataset (left) and the Parzival dataset (right). Respective output from the reconstructive VAE is shown on the bottom.}
+\label{fig:damaged-word-samples}
+\end{figure}
 
 \begin{table}[h]
 \centering
@@ -421,7 +451,7 @@ Damaged Parzival & HoG                     & 0.515          & 0.477          \\
 Damaged Parzival & VAE Encoding 	& 0.615          & 0.572          \\   
 \end{tabular}
 \caption{Results for ``Damaged'' Datasets}
-\label{my-label}
+\label{tab:damaged-results}
 \end{table}
 
 
@@ -431,22 +461,24 @@ Damaged Parzival & VAE Encoding 	& 0.615          & 0.572          \\
 % Reconstructed Data Results
 %
 \section{Reconstruction Results}
-This section evaluated the word spotting system on reconstructed or restored word images. Details on the restorative VAE can be found in section \ref{sec:vae}.
+\label{sec:reconstruction-results}
+
+Finally, word spotting performance is evaluated on reconstructed word images. Details on the restorative VAE can be found in section \ref{sec:vae}, and discussion of these results can be found in section \ref{sec:findings}.
 
 \begin{table}[h]
 \centering
 \begin{tabular}{llll}
 \textbf{Data}  & \textbf{Feature} & \textbf{P@5 (change)} & \textbf{MAP (change)} \\
 \hline
-Reconstructed GW    & HoG			& 0.644 (+0.0)          & 0.583 (+0.0)         \\
-Reconstructed GW    & VAE Encoding 	& 0.665 (+0.0)         & 0.604 (+0.0)         \\
-Reconstructed Parzival & HoG                     & 0.554 (+0.0)         & 0.512 (+0.0)         \\
-Reconstructed Parzival & VAE Encoding 	& 0.620 (+0.0)         & 0.577 (+0.0)         \\
-Reconstructed Wycliffe & HoG                     & 0.873 (+0.0)         & 0.768 (+0.0)         \\
-Reconstructed Wycliffe & VAE Encoding 	& 0.859 (+0.0)         & 0.755 (+0.0)         \\
+Reconstructed GW    & HoG			& 0.644 (+0.042)          & 0.583 (+0.036)         \\
+Reconstructed GW    & VAE Encoding 	& 0.665 (+0.015)         & 0.604 (+0.012)         \\
+Reconstructed Parzival & HoG                     & 0.554 (+0.039)         & 0.512 (+0.035)         \\
+Reconstructed Parzival & VAE Encoding 	& 0.620 (+0.005)         & 0.577 (+0.005)         \\
+Reconstructed Wycliffe & HoG                     & 0.873 (+0.242)         & 0.768 (+0.184)         \\
+Reconstructed Wycliffe & VAE Encoding 	& 0.859 (+0.091)         & 0.755 (+0.093)         \\
 \end{tabular}
 \caption{Results for Reconstructed Data}
-\label{my-label}
+\label{tab:reconstructed-results}
 \end{table}
 
 
@@ -461,15 +493,42 @@ Reconstructed Wycliffe & VAE Encoding 	& 0.859 (+0.0)         & 0.755 (+0.0)    
 %%
 \chapter{Conclusion}
 
-\section{Challenges}
-What I ran into.
+\section{Challenges and Limitations}
+\label{sec:challenges}
+Although the word spotting system detailed in this paper demonstrably improves recognition on damaged datasets, various challenges arose at certain parts of the pipeline. Precise segmentation, ground truth collection, and query-by-example present three challenges encountered which limit the final product.
+
+Although segmentation-free approaches to word spotting have been gaining popularity, this project assumed word segmentation. Specifically, the VAE assumed input samples of a fixed dimension, and that each input sample would contain a single word. For the George Washington and Parzival datasets, the segmentation phase was already completed, but for the custom Wycliffe dataset this was not the case.
+
+The methods section details an algorithm which accurately finds lines of words. After fine-tuning the thresholds and introducing gaussian smoothing to the projection profile, this algorithm performed remarkably well on every page. However, the same adjustments did not produce reliably accurate word segmentation. The space between words varies enough that, unlike line segmentation, a global threshold is unsuitable. Thus, the resulting word images for the Wycliffe dataset often include more than one word (when words were close together) or a partial word (when letters in a word were far apart). This led to the ``segmentation error'' button in the GUI, which flags the sample for re-segmentation.
+
+Because automatic word segmentation could not be trusted, it proved impossible to generate ground truth for the Wycliffe dataset. Once the segmentation system made a single error, each subsequent word in the transcript would be mapped to the incorrect word image. To evaluate the system, manual segmentation of words was performed on the first page of the manuscript to ensure that each word image corresponded to the correct ground truth label.
+
+Lastly, the semi-supervised nature of the system means query-by-text is unsupported until at least one instance of the text has been labeled. The user can still choose to search for matching word images of any word image encountered in the labeling interface. This search, however, is a query-by-example approach, which is less useful for textual analysis.
+
 
 \section{Findings}
-What I found.
+\label{sec:findings}
+Besides demonstrating a semi-supervised approach to word spotting in historical documents, this project demonstrated that VAEs are useful at two points in the word spotting pipeline. First, the encoded representation of word images can be used as features for the matching process. Second, generative VAEs can be used to restore damaged word images, producing an enhanced version for subsequent word spotting.
+
+\subsection{VAE for Feature Extraction}
+Results on three separate datasets showed conclusively that the encoded representation of word images outperformed HoG features for word spotting. This was the case in both section \ref{sec:basic-results} and \ref{sec:damaged-results}, where the {\em P@5} and {\em MAP} metrics were higher when matching VAE features.
+
+Results on the damaged datasets, shown in section \ref{sec:damaged-results}, were especially clear.  The VAE features prove to be more robust to simulated damage, likely because the latent variables capture high-level characteristics. If a small portion of the word image is changed, the VAE is still able to encode those characteristics to some degree, and the resulting feature vector will still reflect some similarity.
+
+In contrast, HoG features change immediately after changes to a single pixel value. Thus, the damage regions created a significantly different feature vector that fails to capture the higher-level characteristics, leading to worse performance on the damaged datasets.
+
+
+\subsection{VAE for Ink Restoration}
+A restorative VAE was shown to improve results on datasets with simulated damage, as well as the Wycliffe test set. The example reconstructions shown in figure \ref{fig:damaged-word-samples} suggest that the network reconstructs images well enough to be visually recognizable to a human, and results in \ref{sec:reconstruction-results} demonstrate that word spotting results improve significantly on the reconstructed data.
+
+This finding is immediately useful for word spotting systems that work on damaged handwritten documents. The VAE can be understood as an enhancement to the raw word images which lead to more useful feature extraction for word spotting. Not only does the network ``fill in'' damaged portions of the word image with plausible pixel values, it also causes different occurrences of the same word to more closely resemble each other. This leads to more similar feature vectors between word occurrences, and greater word spotting accuracy as the end result.
+
 
 \section{Future Work}
-Suggestions for future work.
+\subsection{Alternate Generative Models} 
+Those exploring the use of VAEs for word spotting should investigate alternative approaches to generative neural networks. The VAE relies on fairly simple statistical models which can limit their performance. Generative Adversarial Networks (GANs) \cite{goodfellow2014generative} leverage a game-like training approach, while autoregressive models \cite{oord2016pixel} aim to learn a conditional distribution of the data.
 
+Although different generative approaches present their own unique challenges, compromising on attributes such as training time and efficiency can lead to better results in the long-term.
 
 
 
