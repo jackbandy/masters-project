@@ -259,6 +259,7 @@ HoG features were extracted using a scikit-image implementation \cite{van2014sci
 % VAE Details
 %
 \section{Variational Autoencoder}
+\label{sec:vae}
 
 The purpose of the Variational Autoencoder (VAE) \cite{kingma2013auto} in this system is to learn an encoded representation of word images, without the need for ground truth label. After being trained, the VAE can be used to encode word images into features, as well as provide enhancement of damaged words before matching takes place.
 
@@ -269,6 +270,13 @@ For example, an idealized VAE trained on the MNIST dataset would learn an encodi
 The VAE trains on each dataset separately, so that separate models are created for the George Washington dataset, the Parzival dataset, and the Wycliffe dataset. In the evaluation chapter, these models generate ``restored" versions of the word images before word retrieval takes place, and results are compared to the non-restored word image set.
 
 The VAE was implemented using Keras \cite{chollet2015keras}, with TensorFlow \cite{abadi2016tensorflow} used as the backend.
+
+\subsection{For Feature Extraction}
+\textbf{TODO} describe how VAEs can extract features.
+
+
+\subsection{For Restoration}
+\textbf{TODO} describe how VAEs can reconstruct data.
 
 
 %
@@ -368,7 +376,7 @@ The George Washington Dataset is enormously popular for evaluating handwriting r
 The Parzival database is a medieval German text from the 13th century which was annotated and made publicly available by \cite{fischer2010ground}. It includes nearly 50 manuscript pages. The ink and parchment closely resemble the Wycliffe documents, which is not too surprising given their chronological proximity.
 
 \subsection{Wycliffe Dataset}
-(\textbf{TODO} add details about Wycliffe acquisition.)
+The Wycliffe New Testament is a Middle English Bible translation from the 14th century. Numerous copies of Wycliffe's New Testament survive to this day, but the particular manuscript images used in this project were acquired in 2010 from...?
 
 
 %
@@ -382,12 +390,12 @@ The goal of the basic word spoting experiments was to determine whether the late
 \begin{tabular}{llll}
 \textbf{Data}  & \textbf{Feature} & \textbf{P@5} & \textbf{MAP} \\
 \hline
-Original GW    & HoG			& 0.0          & 0.0          \\
-Original GW    & VAE Encoding 	& 0.0          & 0.0          \\
-Original Parzival & HoG                     & 0.0          & 0.0          \\
-Original Parzival & VAE Encoding 	& 0.0          & 0.0          \\
-Original Wycliffe & HoG			& 0.0          & 0.0          \\
-Original Wycliffe & VAE Encoding	& 0.0          & 0.0         
+Original GW    & HoG			& 0.747          & 0.675          \\
+Original GW    & VAE Encoding 	& 0.748          & 0.678          \\
+Original Parzival & HoG                     & 0.689          & 0.637          \\
+Original Parzival & VAE Encoding 	& 0.771          & 0.720          \\
+Original Wycliffe & HoG			& 0.631          & 0.584          \\
+Original Wycliffe & VAE Encoding	& 0.768          & 0.662         
 \end{tabular}
 \caption{Word Spotting Results}
 \label{table:word-spotting}
@@ -407,10 +415,10 @@ The goal of experiments on damaged word images was twofold: first, to determine 
 \begin{tabular}{llll}
 \textbf{Data}  & \textbf{Feature} & \textbf{P@5} & \textbf{MAP} \\
 \hline
-Damaged GW    & HoG			& 0.0          & 0.0          \\
-Damaged GW    & VAE Encoding 	& 0.0          & 0.0          \\
-Damaged Parzival & HoG                     & 0.0          & 0.0          \\
-Damaged Parzival & VAE Encoding 	& 0.0          & 0.0          \\   
+Damaged GW    & HoG			& 0.602          & 0.547          \\
+Damaged GW    & VAE Encoding 	& 0.650          & 0.592          \\
+Damaged Parzival & HoG                     & 0.515          & 0.477          \\
+Damaged Parzival & VAE Encoding 	& 0.615          & 0.572          \\   
 \end{tabular}
 \caption{Results for ``Damaged'' Datasets}
 \label{my-label}
@@ -420,20 +428,22 @@ Damaged Parzival & VAE Encoding 	& 0.0          & 0.0          \\
 
 
 %
-% Wycliffe Data Results
+% Reconstructed Data Results
 %
 \section{Reconstruction Results}
-Classification on reconstructed data
+This section evaluated the word spotting system on reconstructed or restored word images. Details on the restorative VAE can be found in section \ref{sec:vae}.
 
 \begin{table}[h]
 \centering
 \begin{tabular}{llll}
 \textbf{Data}  & \textbf{Feature} & \textbf{P@5 (change)} & \textbf{MAP (change)} \\
 \hline
-Reconstructed GW    & HoG			& 0.0 (0.0)          & 0.0 (0.0)         \\
-Reconstructed GW    & VAE Encoding 	& 0.0 (0.0)         & 0.0 (0.0)         \\
-Reconstructed Parzival & HoG                     & 0.0 (0.0)         & 0.0 (0.0)         \\
-Reconstructed Parzival & VAE Encoding 	& 0.0 (0.0)         & 0.0 (0.0)         \\
+Reconstructed GW    & HoG			& 0.644 (+0.0)          & 0.583 (+0.0)         \\
+Reconstructed GW    & VAE Encoding 	& 0.665 (+0.0)         & 0.604 (+0.0)         \\
+Reconstructed Parzival & HoG                     & 0.554 (+0.0)         & 0.512 (+0.0)         \\
+Reconstructed Parzival & VAE Encoding 	& 0.620 (+0.0)         & 0.577 (+0.0)         \\
+Reconstructed Wycliffe & HoG                     & 0.873 (+0.0)         & 0.768 (+0.0)         \\
+Reconstructed Wycliffe & VAE Encoding 	& 0.859 (+0.0)         & 0.755 (+0.0)         \\
 \end{tabular}
 \caption{Results for Reconstructed Data}
 \label{my-label}
