@@ -116,7 +116,7 @@ Finally, several projects have explored interactive approaches to word annotatio
 % Motivation
 %
 \section{Motivation}
-After the review of related work in printed text recognition, handwritten word recognition, and handwritten word spotting, they may appear to be solved problems. The explosion of machine learning research - in particular convolutional neural networks - has led to drastic improvements in performance on these tasks, and many advancements have even found their way to consumer products. For example, default software on most PCs allows users to search within scans or photographs of printed typeface, and note-taking software can now interpret penmanship that would be indecipherable to many human readers.
+After the review of related work in printed text recognition, handwritten word recognition, and handwritten word spotting, they may appear to be solved problems. The explosion of machine learning research -- in particular convolutional neural networks -- has led to drastic improvements in performance on these tasks, and many advancements have even found their way to consumer products. For example, default software on most PCs allows users to search within scans or photographs of printed typeface, and note-taking software can now interpret penmanship that would be indecipherable to many human readers.
 
 However, the process of automatically transcribing damaged documents presents a niche area of text recognition which is not addressed well by standard approaches. Many historical documents, including those reviewed in this project, were meticulously transcribed with legibility comparable to typeface, suggesting that automated transcription would be straightforward. But over time, these documents have incurred damage of all different kinds. The characters originally may have looked like typeface, but after hundreds of years of human handling, physical corrosion, chemical decay, and other processes, reading certain parts of these documents is an arduous task even for skilled textual analysts. For such cases, neither fully human transcription nor fully automated transcription is ideal.
 
@@ -169,7 +169,7 @@ To deal with the problem of damaged and distorted words, this project presents a
 % Preprocessing
 %
 \section{Preprocessing}
-For the George Washington and Parzival datasets, segmented and binarized word images are already provided courtesy of \cite{fischer2012lexicon}. For the Wycliffe dataset, several preprocessing steps must be taken to get from raw images of the manuscript to segmented, binarized word images suitable for word spotting.
+For two of the datasets used to evaluate the system (the George Washington and Parzival datasets), segmented and binarized word images are already provided courtesy of \cite{fischer2012lexicon}. For the Wycliffe dataset, several preprocessing steps must be taken to get from raw images of the manuscript to segmented, binarized word images suitable for word spotting.
 
 
 \subsection{Alignment}
@@ -183,13 +183,13 @@ For the George Washington and Parzival datasets, segmented and binarized word im
 \end{figure}
 The first step, visualized in figure \ref{fig:rotate-crop}, involves rotating the original photographs so that text columns are vertically aligned. Rotation varies depending on where the page existed in the binding and which side of the book it was on.
 
-Columns were cropped identically on each page, based on the assumption that more precise cropping would take place in the line segmentation and word segmentation algorithms. The key in column cropping is to create images that are vertically aligned and only contain text from one column. The amount of margin outside the column need not be precise, however, to allow for key assumptions in the binarization phase, it must not contain anything besides paper.
+Columns were cropped identically on each page, based on the assumption that more precise cropping would take place in the line segmentation and word segmentation algorithms. The key in column cropping is to create images that are vertically aligned and only contain text from one column. The amount of margin outside the column need not be precise. However, to allow for key assumptions in the binarization phase, the margin must not contain anything besides paper.
 
 
 \subsection{Binarization}
-Once the column images are cropped, the RGB image is flattened into a single grayscale channel. The image is then inverted so that the text is white and the background dark gray. Next, the image is thresholded to create a binarized representation. Because lighting and coloring varies across manuscript pages, a simple global threshold would lead to noisy and inconsistent background removal. Instead, a threshold should be calculated individually for each page. This is simply referred to as ``adaptive thresholding,'' and considering the nature of the data leads to a natural choice of algorithm for this process.
+Once the column images are cropped, the RGB image is flattened into a single grayscale channel. The image is then inverted so that the text is white and the background dark gray. Next, the image is thresholded to create a binarized representation. Because lighting and coloring varies across manuscript pages, a simple global threshold would lead to noisy and inconsistent background removal. Instead, a threshold should be calculated individually for each page -- a process referred to as ``adaptive thresholding.'' Considering the nature of the data leads to a natural choice of algorithm for this process.
 
-Because the column image is assumed to only contain ink and paper, a histogram of values in the column image should be bimodal (the two peaks representing the approximate value of an ink pixel and a paper pixel). To remove the paper background pixels, the system uses Otsu's thresholding algorithm \cite{otsu1979threshold} as implemented by OpenCV \cite{bradski2000opencv}. Otsu's binarization algorithm takes advantage of the bimodal distribution. It works by choosing a threshold value in between the two peaks that minimizes the variance within the two ``classes,'' an ideal method for these manuscript pages.
+Because the column image is assumed to only contain ink and paper, a histogram of values in the column image should be bimodal (with the two peaks representing the approximate value of an ink pixel and a paper pixel). Otsu's binarization algorithm  \cite{otsu1979threshold} takes advantage of this bimodal distribution. It works by choosing a threshold value in between the two peaks that minimizes the variance within the two ``classes,'' an ideal method for these manuscript pages. The system uses Otsu's thresholding algorithm as implemented by OpenCV \cite{bradski2000opencv}.
 
 
 \subsection{Line Segmentation}
@@ -207,21 +207,21 @@ The Wycliffe New Testament is aligned and spaced with remarkable consistency, an
 
 However, because lines are relatively wide (10-12 words), writing on some pages is slightly slanted. Figure \ref{fig:flat-vs-tilted} illustrates the dilemma of horizontal segmentations.
 
-To segment tilted lines of text, a line of best fit must be generated across the words. This is achieved by taking the coordinates of all the nonzero values (i.e. values above the ink threshold) in the approximated horizontal text region, and applying random sample consensus (RANSAC) \cite{fischler1987random} to generate a line that fits the overall tilt of the given line. The resulting approximation eliminates most word cutoff.
+To segment tilted lines of text, a line of best fit is generated across the words in a given line. This is achieved by taking the coordinates of all the nonzero values (i.e. values above the ink threshold) in the approximated horizontal text region, and applying random sample consensus (RANSAC) \cite{fischler1987random} to generate a line that fits the overall tilt of the given line. The resulting approximation eliminates most word cutoff.
 
 \begin{figure}[t]
 \begin{center}
 \includegraphics[width=14cm]{flat-vs-tilted}
 \end{center}
-\caption{Illustrating the need for tilt during the line segmentation phase. Although the column has been aligned vertically, perfectly horizontal approximations (above) for line segmentation result in cutoff words. Tilted lines generated by the RANSAC algorithm fit the slight slant of the text.}
+\caption{Illustrating the need for tilt during the line segmentation phase. Although the column has been aligned vertically, perfectly horizontal approximations (above) for line segmentation result in cutoff words. Tilted lines generated by the RANSAC algorithm fit the slant of the text.}
 \label{fig:flat-vs-tilted}
 \end{figure}
 
 
 \subsection{Word Segmentation}
-To segment the line of text into individual words. Once the horizontal projection profile is generated, the system applies a gaussian filter to eliminate noise in the dataset. This helps ensure that local minimums in the profile correspond to word gaps.
+After a line is segmented, the line must be divided into individual words. A similar process to line segmentation is used. Once a horizontal projection profile of a text line is generated, the system applies a gaussian filter to eliminate noise in the dataset. This helps ensure that local minimums in the profile correspond to word gaps.
 
-Once the system finds local minimums in the profile, it checks whether their values dip below a threshold. The threshold used in this paper was hard-coded as follows:
+Once the system finds local minimums in the profile, it checks whether their values dip below a threshold. This threshold was calculated as follows:
 
 \begin{center}
 \begin{math}
@@ -233,9 +233,9 @@ where {\em P} is the horizontal projection profile of the text line.
 
 
 \subsection{Damage Simulation}
-The George Washington and Parzival datasets exist in fairly high quality. To demonstrate the system's ability to handle damaged datasets, simulated damage was performed on the word images. A simple approach was used, and works as follows.
+The George Washington and Parzival datasets exist in fairly high quality. So, to demonstrate the system's ability to handle damaged datasets, simulated damage was performed on the word images. A simple approach was used, and works as follows.
 
-One half of the images in the dataset are chosen at random to be ``damaged." Each of these images is treated with a random number of damage blocks, at least two and at most eight. Each damage block is a rectangle of random height and width, from sixteen pixels to thirty pixels. The damage block is centered at a random nonzero pixel in the image, and each pixel contained in the block is set to zero. Different examples of damage simulation are shown in figure \ref{fig:damage-simulation}.
+One half of the images in the dataset are chosen at random to be ``damaged." Each of these images is treated with a random number of damage blocks, at least two and at most six. Each damage block is a rectangle of random height and width, from sixteen pixels to thirty pixels. The damage block is centered at a random nonzero pixel in the image, and each pixel contained in the block is set to zero. An example of damage simulation is shown in figure \ref{fig:damage-simulation}.
 
 \begin{figure}[h]
 \begin{center}
@@ -246,8 +246,8 @@ One half of the images in the dataset are chosen at random to be ``damaged." Eac
 \end{figure}
 
 
-\subsection{Feature Extraction}
-Histogram of oriented gradients (HoG) features were used as features for the images. Although more advanced features are available that result in better accuracy, the goal was to apply a proven technique that would provide adequate baseline performance. This portion of the system is modular, so an improved feature extraction system would be straightforward to implement.
+\subsection{Baseline Feature Extraction}
+The histogram of oriented gradients (HoG) feature was used as a baseline feature for the images. Although more advanced features are available that result in better accuracy, the goal was to apply a proven technique that would provide adequate baseline performance. This portion of the system is modular, so an improved feature extraction system would be straightforward to implement.
 
 HoG features were extracted using a scikit-image implementation \cite{van2014scikit}. The results in this paper were achieved using a HoG descriptor with 9 orientation bins, a cell size of 16pixels x 16pixels, 2x2 cells per block, and L1 normalization.
 
@@ -259,21 +259,21 @@ HoG features were extracted using a scikit-image implementation \cite{van2014sci
 \section{Variational Autoencoder}
 \label{sec:vae}
 
-The purpose of the Variational Autoencoder (VAE) \cite{kingma2013auto} in this system is to learn an encoded representation of word images, without the need for ground truth label. After being trained, the VAE can be used to encode word images into features, as well as provide enhancement of damaged words before matching takes place.
+The purpose of the Variational Autoencoder (VAE) \cite{kingma2013auto} in this system is to learn an encoded representation of word images, without the need for ground truth label. After being trained, the VAE can be used to encode word images into features, as well as to enhance damaged words before word spotting takes place.
 
-The VAE is an unsupervised generative technique. In this case, the VAE works on top of a convolutional neural network and is trained using stochastic gradient descent. As a generative model, its job ``is to somehow capture the dependencies between pixels" \cite{doersch2016tutorial}. After proper training, the VAE should be able to take an input image, create an encoded representation of that image, and then generate a similar image using only the encoding.
+The VAE is an unsupervised generative technique for learning a statistical distribution of input data. In this case, the VAE works on top of a convolutional neural network and is trained using stochastic gradient descent. As a generative model, its job ``is to somehow capture the dependencies between pixels" \cite{doersch2016tutorial}. After proper training, the VAE should be able to take an input image, create an encoded representation of that image, and then generate a similar image using only the encoding.
 
-For example, an idealized VAE trained on the MNIST dataset would learn an encoding that captured the digits 0 to 9. This encoded layer of the network is referred to as the latent variable, and the latent variables are used to decide which class of output should be generated. If latent variables corresponded to a 1, the decoding portion of the network would generate output that resembled a 1. The structure of the VAE and its overall process is visualized in figure \ref{fig:vaedemo}.
+For example, an idealized VAE trained on the MNIST dataset would learn an encoding that captured the digits 0 to 9. This encoded layer of the network is referred to as the latent variable, and the latent variables are used to decide which class of output should be generated. If latent variables corresponded to a 1, the decoding portion of the network would generate output that resembled a 1.
 
 The VAE trains on each dataset separately, so that separate models are created for the George Washington dataset, the Parzival dataset, and the Wycliffe dataset. In the evaluation chapter, these models generate ``restored" versions of the word images before word retrieval takes place, and results are compared to the non-restored word image set.
 
-The VAE was implemented using Keras \cite{chollet2015keras}, with TensorFlow \cite{abadi2016tensorflow} used as the backend.
+The VAE was implemented using Keras \cite{chollet2015keras}, with TensorFlow \cite{abadi2016tensorflow} used as the backend. (\textbf{TODO add VAE figure}).
 
-\subsection{For Feature Extraction}
+\subsection{VAE for Feature Extraction}
 When using the VAE as a feature extractor, no changes are made to the network architecture: the network receives an input image and performs the convolutional filters just the same as a normal prediction. The only difference is that the network is pruned at the final convolutional layer, or the ``encoded representation'' layer. The output of this layer is flattened into a 1-dimensional feature vector to be used in word spotting.
 
-\subsection{For Restoration}
-For damaged datasets, it is desirable to reconstruct word images to resemble their original form. In the case of damaged word images, restoration involves replacing blank or missing pixels with expected values in a way that completes the shape of the expected word. In computer vision, this task of filling in corrupted images is referred to as ``inpainting.''
+\subsection{VAE for Restoration}
+For damaged datasets, it is desirable to reconstruct the input to more closely resemble their original form. In the case of damaged word images, restoration involves replacing blank or missing pixels with expected values in a way that completes the shape of the expected word. The computer vision community refers to this task of filling in corrupted images as ``inpainting.''
 
 VAEs have previously been used for inpainting \cite{xie2012image}, and can be trained to do so with a fairly simple modification: rather than using the same image as input and ground truth, a damaged version of the ground truth is used as the input image. Then, training for the VAE involves learning how to create the undamaged version of the image based on the input/damaged version. This method is used to train a network hereafter referred to as the restorative network, and results can be seen in figure \ref{fig:damaged-word-samples}.
 
@@ -282,7 +282,7 @@ VAEs have previously been used for inpainting \cite{xie2012image}, and can be tr
 % Word retrieval Section
 %
 \section{Word Retrieval}
-The current system employs a simple query-by-example method. This means that the query requires a word image as input, rather than a string. Given a word image as input, the query system calculates the feature vector and compares it to the feature vectors for all other word images. The results are sorted by the cosine distance between vectors, and returned in order of proximity.
+The current system employs a simple query-by-example method. This means that the query requires a word image as input, rather than a string. Given a word image as input, the query system calculates the feature vector (either HoG or VAE encoding) and compares it to the feature vectors for all other word images. The results are sorted by the cosine distance between vectors, and returned in order of proximity.
 
 
 
@@ -290,14 +290,12 @@ The current system employs a simple query-by-example method. This means that the
 % Data Background Section
 %
 \section{Providing Labels}
-In the experiments, a simulated oracle was used for labeling. Because the word images were sorted in order of appearance in the text, the oracle simply labeled the image using the word at the corresponding index of the transcript. However, this was done purely for evaluation purposes, as one focus of the project was to provide users a way to interact with an automated transcription system.
-
-Users can provide labels to word images in a simple graphical user interface which displays the original word image (before inverting it and removing the background). The interface, built using TKInter, allows a user to type in a label for the word image, skip to the next word, or flag the word image as requiring re-segmentation. The label is stored in a simple file that also records the coordinates of the word and whether segmentation was affirmed.
+Users can provide labels to word images in a simple graphical user interface which displays the original word image (before inverting it and removing the background). The interface, built using TKInter, allows a user to type in a label for the word image, skip to the next word, flag the word image as requiring re-segmentation, or search for other occurrences of the word. The label is stored in a simple file that also records the coordinates of the word and whether segmentation was affirmed.
 
 \subsection{Priority Queue}
 The order in which to request labels from users is a key concern. Two simple choices would be to present words in order of appearance, or to present them randomly.
 
-A more useful approach, leveraged by this system, allows users to label ``interesting'' words. In some cases, that could mean the most frequently occurring words, and in other cases, it could mean labeling the rare words. The general approach remains the same: after features are extracted from word images, agglomerative clustering is performed on the features, using the estimated number of unique words in the data to determine how many clusters should be formed.
+A more useful approach, leveraged by this system, allows users to label ``interesting'' words. In some cases, that could mean the most frequently occurring words, and in other cases, it could mean labeling the rare words. The general approach remains the same: after features are extracted from word images, agglomerative clustering is performed on the feature vectors, using the estimated number of unique words in the data to determine how many clusters should be formed.
 
 Once word images are clustered, labeling common words is a matter of labeling words in the largest cluster. Words that occur only once ({\em hapax legomenons}) correspond to clusters of size one. The system allows users to label words randomly, in order of appearance, in order of frequency (common words first), or in reverse order of frequency (rare words first).
 
@@ -310,14 +308,14 @@ Once word images are clustered, labeling common words is a matter of labeling wo
 Unique metrics are used to objectively evaluate word spotting methods. Most of these metrics are primarily concerned with the {\em precision} of the results. In other words, when a word is queried and the system provides a list of matching word images, the matches are evaluated based on whether those results are correct, and not based on whether it missed other matches in the data.
 
 \subsection{Precision at K}
-The precision at k ({\em P@k}) metric is one of the most widely used for evaluating word spotting methods. P@k determines the precision for the {\em k} top retrieved words, or the relevance of the {\em k} top retrieved words.
+The precision at k ({\em P@k}) metric is one of the most widely used for evaluating word spotting methods. {\em P@k} determines the precision for the {\em k} top retrieved words, or the relevance of the {\em k} top results.
 \begin{center}
 \begin{math}
 {P@k}=\cfrac{\mid\{relevant\ instances\}\cap\{k\ retrieved\ instances\}\mid} {\mid \{k\ retrieved\ instances\}\mid}
 \end{math}
 \end{center}
 
-So if k=5, and a query for the word ``october'' returned three instances of ``october'' and two instances of ``octopus,'' the {\em P@5} score score would be \begin{math}\frac{3}{5} = 0.6\end{math} for that query. This project uses P@5, as do most other word spotting papers from the past decade, reviewed in \cite{giotis2017survey}.
+So if k=5, and a query for the word ``october'' returned three instances of ``october'' and two instances of ``octopus,'' the {\em P@5} score score would be \begin{math}\frac{3}{5} = 0.6\end{math} for that query. This project uses {\em P@5}, as do most other word spotting papers from the past decade, reviewed in \cite{giotis2017survey}.
 
 
 \subsection{Mean Average Precision}
@@ -380,7 +378,7 @@ The Parzival database is a medieval German text from the 13th century which was 
 \subsection{Wycliffe Dataset}
 The Wycliffe New Testament is a Middle English Bible translation from the 14th century. Numerous copies of Wycliffe's New Testament survive to this day, but the particular manuscript images used in this project were acquired in 2010 from...?
 
-Challenges discussed in section \ref{sec:challenges} explain why this test set was relatively small compared to the full Wycliffe New Testament, even though the system allows query-by-example over the full manuscript.
+Challenges discussed in section \ref{sec:challenges} explain why this test set was relatively small compared to the full Wycliffe New Testament. However, the system does allow query-by-example over the full manuscript.
 
 
 %
@@ -428,7 +426,7 @@ Original Wycliffe & VAE Encoding	& 0.768          & 0.662
 \label{sec:damaged-results}
 The goal of experiments on damaged word images was twofold: first, to determine whether VAE features were more suitable for damaged data, and second, to set a baseline performance to be compared against in the following section.
 
-Table \ref{tab:damaged-results} shows that VAE encoding outperforms HoG on the damaged datasets, even on the George Washington dataset which saw little difference in the previous section.
+Table \ref{tab:damaged-results} shows that VAE encoding outperforms HoG on the damaged datasets, even on the George Washington dataset which saw little difference between features in the previous section.
 
 \begin{figure}[t]
 \begin{center}
@@ -464,7 +462,7 @@ Damaged Parzival & VAE Encoding 	& 0.615          & 0.572          \\
 \section{Reconstruction Results}
 \label{sec:reconstruction-results}
 
-Finally, word spotting performance is evaluated on reconstructed word images. Details on the restorative VAE can be found in section \ref{sec:vae}, and discussion of these results can be found in section \ref{sec:findings}.
+Finally, word spotting performance is evaluated on reconstructed word images. The change represents the improvement over classification results on the original data (Wycliffe) or damaged data (George Washington and Parzival). Details on the restorative VAE can be found in section \ref{sec:vae}, and discussion of these results can be found in section \ref{sec:findings}.
 
 \begin{table}[h]
 \centering
@@ -494,19 +492,6 @@ Reconstructed Wycliffe & VAE Encoding 	& 0.859 (+0.091)         & 0.755 (+0.093)
 %%
 \chapter{Conclusion}
 
-\section{Challenges and Limitations}
-\label{sec:challenges}
-Although the word spotting system detailed in this paper demonstrably improves recognition on damaged datasets, various challenges arose at certain parts of the pipeline. Precise segmentation, ground truth collection, and query-by-example present three challenges encountered which limit the final product.
-
-Although segmentation-free approaches to word spotting have been gaining popularity, this project assumed word segmentation. Specifically, the VAE assumed input samples of a fixed dimension, and that each input sample would contain a single word. For the George Washington and Parzival datasets, the segmentation phase was already completed, but for the custom Wycliffe dataset this was not the case.
-
-The methods section details an algorithm which accurately finds lines of words. After fine-tuning the thresholds and introducing gaussian smoothing to the projection profile, this algorithm performed remarkably well on every page. However, the same adjustments did not produce reliably accurate word segmentation. The space between words varies enough that, unlike line segmentation, a global threshold is unsuitable. Thus, the resulting word images for the Wycliffe dataset often include more than one word (when words were close together) or a partial word (when letters in a word were far apart). This led to the ``segmentation error'' button in the GUI, which flags the sample for re-segmentation.
-
-Because automatic word segmentation could not be trusted, it proved impossible to generate ground truth for the Wycliffe dataset. Once the segmentation system made a single error, each subsequent word in the transcript would be mapped to the incorrect word image. To evaluate the system, manual segmentation of words was performed on the first page of the manuscript to ensure that each word image corresponded to the correct ground truth label.
-
-Lastly, the semi-supervised nature of the system means query-by-text is unsupported until at least one instance of the text has been labeled. The user can still choose to search for matching word images of any word image encountered in the labeling interface. This search, however, is a query-by-example approach, which is less useful for textual analysis.
-
-
 \section{Findings}
 \label{sec:findings}
 Besides demonstrating a semi-supervised approach to word spotting in historical documents, this project demonstrated that VAEs are useful at two points in the word spotting pipeline. First, the encoded representation of word images can be used as features for the matching process. Second, generative VAEs can be used to restore damaged word images, producing an enhanced version for subsequent word spotting.
@@ -525,11 +510,24 @@ A restorative VAE was shown to improve results on datasets with simulated damage
 This finding is immediately useful for word spotting systems that work on damaged handwritten documents. The VAE can be understood as an enhancement to the raw word images which lead to more useful feature extraction for word spotting. Not only does the network ``fill in'' damaged portions of the word image with plausible pixel values, it also causes different occurrences of the same word to more closely resemble each other. This leads to more similar feature vectors between word occurrences, and greater word spotting accuracy as the end result.
 
 
+
+\section{Challenges and Limitations}
+\label{sec:challenges}
+Although the word spotting system detailed in this paper demonstrably improves recognition on damaged datasets, various challenges arose at certain parts of the pipeline. Precise segmentation, ground truth collection, and query-by-example present three challenges encountered which limit the final product.
+
+Although segmentation-free approaches to word spotting have been gaining popularity, this project assumed word segmentation. Specifically, the VAE assumed input samples of a fixed dimension, and that each input sample would contain a single word. For the George Washington and Parzival datasets, the segmentation phase was already completed, but for the custom Wycliffe dataset this was not the case.
+
+The methods section details an algorithm which accurately finds lines of words. After fine-tuning the thresholds and introducing gaussian smoothing to the projection profile, this algorithm performed remarkably well on every page. However, the same adjustments did not produce reliably accurate word segmentation. The space between words varies enough that, unlike line segmentation, a global threshold is unsuitable. Thus, the resulting word images for the Wycliffe dataset often include more than one word (when words were close together) or a partial word (when letters in a word were far apart). This led to the ``segmentation error'' button in the GUI, which flags the sample for re-segmentation.
+
+Because automatic word segmentation could not be trusted, it proved impossible to generate ground truth for the Wycliffe dataset. Once the segmentation system made a single error, each subsequent word in the transcript would be mapped to the incorrect word image. To evaluate the system, manual segmentation of words was performed on the first page of the manuscript to ensure that each word image corresponded to the correct ground truth label.
+
+Lastly, the semi-supervised nature of the system means query-by-text is unsupported until at least one instance of the text has been labeled. The user can still choose to search for matching word images of any word image encountered in the labeling interface. This search, however, is a query-by-example approach, which is less useful for textual analysis.
+
+
+
 \section{Future Work}
 \subsection{Alternate Generative Models} 
-Those exploring the use of VAEs for word spotting should investigate alternative approaches to generative neural networks. The VAE relies on fairly simple statistical models which can limit their performance. Generative Adversarial Networks (GANs) \cite{goodfellow2014generative} leverage a game-like training approach, while autoregressive models \cite{oord2016pixel} aim to learn a conditional distribution of the data.
-
-Although different generative approaches present their own unique challenges, compromising on attributes such as training time and efficiency can lead to better results in the long-term.
+Those exploring the use of VAEs for word spotting should investigate alternative approaches to generative neural networks. The VAE relies on fairly simple statistical models which can limit their performance. Generative Adversarial Networks (GANs) \cite{goodfellow2014generative} leverage a game-like training approach, while autoregressive models \cite{oord2016pixel} aim to learn a conditional distribution of the data. Although these different generative approaches present their own unique challenges, compromising on attributes such as training time and efficiency can lead to better results in the long-term.
 
 
 
