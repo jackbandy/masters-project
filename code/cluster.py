@@ -16,8 +16,8 @@ def createClusters(features):
 
 
 def predictAgglomNClusters(features, n_clusters):
-    model = AgglomerativeClustering(n_clusters=n_clusters).fit_predict(features)
-    return model
+    preds = AgglomerativeClustering(n_clusters=n_clusters).fit_predict(features)
+    return preds
 
 
 def createNClusters(features, n_clusters):
