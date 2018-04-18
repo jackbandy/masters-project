@@ -14,16 +14,22 @@ import PIL.ImageTk
 import util
 import pdb
 from sklearn.metrics.pairwise import pairwise_distances
+import pickle
 
 
-WORD_IMAGES_PATH = '../gw-data/data/word_images_normalized/'
+#WORD_IMAGES_PATH = '../gw-data/data/word_images_normalized/'
+WORD_IMAGES_PATH = '../data/norm_auto_segmented_samples/'
+WORD_LABELS_PATH = '../data/word_labels.pkl'
+ORDER = 'random'
+#ORDER = 'appearance'
 
 
 class Application(tk.Frame):
     def __init__(self, master=None):
         print("Initializing...")
         # extract features
-        samples, _, _= util.collectSamples(WORD_IMAGES_PATH, binarize=False, scale_to_fill=True)
+        samples, _, _= util.collectSamples(WORD_IMAGES_PATH, binarize=False,
+                scale_to_fill=True, fixed_max_width=624, fixed_max_height=128)
         self.sample_features = util.getHogForSamples(samples, scale=2)
         self.current_cluster = 0
         self.current_index = 0
@@ -33,6 +39,11 @@ class Application(tk.Frame):
         if 'DS_Store' in self.images[0]:
             del self.images[0]
         self.n_images = len(self.images)
+
+        try:
+            self.labels = pickle.load(open(WORD_LABELS_PATH))
+        except Exception:
+            self.labels = dict()
 
         tk.Frame.__init__(self, master)
         self.grid()
@@ -73,17 +84,28 @@ class Application(tk.Frame):
 
     def submit(self):
         label = self.labelInput.get()
+        to_put = dict()
+        to_put['label'] = label
+        to_put['segmentation'] = 'accepted'
+        self.labels[self.images[self.current_index]] = to_put
+        '''
         self.cluster_data[self.current_cluster]['word'] = label
+        np.save('labeled-clusters.npy', self.cluster_data)
+        '''
         self.labelInput.delete(0, len(label))
         self.showNextWord()
-        np.save('labeled-clusters.npy', self.cluster_data)
         print("Label: -{}-".format(label))
         print("Submitting")
+        with open(WORD_LABELS_PATH, 'wb') as handle:
+            pickle.dump(self.labels, handle)
 
 
 
     def showNextWord(self):
-        self.current_index += 1
+        if ORDER == 'random':
+            self.current_index = np.random.randint(len(self.images))
+        elif ORDER == 'appearance':
+            self.current_index += 1
         imgPath = r"{}/{}".format(WORD_IMAGES_PATH, self.images[self.current_index])
         im = PIL.Image.open(imgPath)
         self.raw_word_image = PIL.ImageTk.PhotoImage(im)

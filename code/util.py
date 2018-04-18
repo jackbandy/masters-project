@@ -202,7 +202,8 @@ def saveImagesWithLabels(images, labels, directory='predictions'):
 
 
 
-def collectSamples(directory, invert=True, binarize=True, scale_to_fill=False):
+def collectSamples(directory, invert=True, binarize=True, scale_to_fill=False,
+        fixed_max_width=None, fixed_max_height=None):
     file_names = os.listdir(directory)
     file_names.sort()
     images = []
@@ -228,6 +229,13 @@ def collectSamples(directory, invert=True, binarize=True, scale_to_fill=False):
     while max_height % 16 != 0:
         max_height += 1
 
+    if fixed_max_width:
+        max_width = fixed_max_width
+    if fixed_max_height:
+        max_height = fixed_max_height
+
+    print("Dimensions: {} x {}".format(max_width, max_height))
+
     # second loop: center all images in a numpy array
     all_images = np.zeros((len(images), max_height, max_width),
             dtype=np.uint8)
@@ -239,6 +247,10 @@ def collectSamples(directory, invert=True, binarize=True, scale_to_fill=False):
             scaled_im = np.where(scaled_im > 0, white_val, 0)
             all_images[i] = scaled_im
         im = images[i]
+        if im.shape[1] > max_width:
+            top = int((max_height - im.shape[0]) / 2)
+            all_images[i, top:top+im.shape[0], :] = im[:, :max_width]
+            continue
         top = int((max_height - im.shape[0]) / 2)
         left = int((max_width - im.shape[1]) / 2)
         all_images[i, top:top+im.shape[0], left:left+im.shape[1]] = im

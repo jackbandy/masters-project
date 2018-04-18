@@ -20,12 +20,16 @@ from cv2 import erode,dilate
 import pdb
 
 
+OUTPUT_DIR = '../data/norm_auto_segmented_samples/'
+RAW_OUTPUT_DIR = '../data/raw_auto_segmented_samples/'
+
 def main():
     image_dir = '../data/aligned_sample_pages/'
     images = os.listdir(image_dir)
-    output_dir = '../data/auto_segmented_samples/'
-    if not (os.path.isdir(output_dir)):
-        os.mkdir(output_dir)
+    if not (os.path.isdir(OUTPUT_DIR)):
+        os.mkdir(OUTPUT_DIR)
+    if not (os.path.isdir(RAW_OUTPUT_DIR)):
+        os.mkdir(RAW_OUTPUT_DIR)
 
     all_estimates = []
     for name in images:
@@ -40,6 +44,7 @@ def main():
     '''
 
 def getWordEstimates(image_path, image_name, image_num):
+    raw_image = util.loadImage(image_path, invert=False)
     page_image = util.loadImage(image_path)
     binary_image = util.removeBackground(page_image)
 
@@ -60,6 +65,7 @@ def getWordEstimates(image_path, image_name, image_num):
    
     edge = binary_image.shape[1]
     for tilted in tilted_lines:
+        line_num += 1
         # clear out above and below the slanted text
         tmp_image = np.array(binary_image)
         for i in range(0,edge):
@@ -75,12 +81,27 @@ def getWordEstimates(image_path, image_name, image_num):
         line_bot = int(min(left, right)) + (2*avg_line_split)
 
         word_locations = smartVerticalLines(tmp_image[line_top:line_bot, :])
-        previous_word_bound = 0
-        for w in word_locations[:-1]:
-            center = int(tilted.predict(w))
+        if not word_locations:
+            continue
+        previous_word_bound = max(0, word_locations[0])
+        for w in word_locations[1:]:
+            word_num += 1
+            top = int(tilted.predict(previous_word_bound)) - avg_line_split
+            bot = int(tilted.predict(w)) + avg_line_split
+            if previous_word_bound > w:
+                previous_word_bound = w
+                continue
+            print("top={}, bot={}, l={}, r={}".format(top, bot,
+                previous_word_bound, w))
+            word_image = raw_image[top:bot, previous_word_bound:w]
+            white_word_image = binary_image[top:bot, previous_word_bound:w]
+            bw_image = util.invertImage(white_word_image)
+            imageio.imwrite('{}/{}-{}-{}.png'.format(OUTPUT_DIR, image_num,line_num, word_num), bw_image)
+            imageio.imwrite('{}/{}-{}-{}.png'.format(RAW_OUTPUT_DIR, image_num, line_num, word_num), word_image)
             #plt.plot((w,w), (center-avg_line_split, center+avg_line_split), 'r')
             #estimates.append([image_name,previous_line_bound,previous_word_bound,l,w,"unlabeled"])
             previous_word_bound = w
+        word_num = 0
 
     #edge case: get the last line of text
     l = binary_image.shape[0]
@@ -157,7 +178,10 @@ def smartVerticalLines(image, test_plots=False):
     im_array = np.array(dil_image)
     hist = np.sum(im_array, axis=0)
     bl = gaussian_filter(hist, sigma=10)
-    lows = argrelmin(bl)[0]
+    try:
+        lows = argrelmin(bl)[0]
+    except Exception:
+        return None
     if test_plots:
         plt.plot(hist)
         plt.show()
