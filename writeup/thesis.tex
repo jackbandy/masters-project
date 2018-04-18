@@ -259,13 +259,21 @@ HoG features were extracted using a scikit-image implementation \cite{van2014sci
 
 The purpose of the Convolutional Autoencoder (CAE) \cite{masci2011stacked} in this system is to learn an encoded representation of word images, without the need for ground truth label. After being trained, the CAE can be used to encode word images into features, as well as to enhance damaged words before word spotting takes place.
 
-The CAE is an unsupervised generative technique for learning a statistical distribution of input data. In this case, the CAE works on top of a convolutional neural network and is trained using stochastic gradient descent. As a generative model, its job ``is to somehow capture the dependencies between pixels" \cite{doersch2016tutorial}. After proper training, the CAE should be able to take an input image, create an encoded representation of that image, and then generate a similar image using only the encoding.
+The CAE is an unsupervised generative technique for learning a latent representation of input data. In this case, the autoencoder works on top of a convolutional neural network and is trained using stochastic gradient descent, where the loss function is the cross-entropy between the output image and the input image. As a generative model, its job ``is to somehow capture the dependencies between pixels" \cite{doersch2016tutorial}. After proper training, the CAE should be able to take an input image, create an encoded representation of that image, and then generate a similar image using only the encoding.
 
 For example, an idealized CAE trained on the MNIST dataset would learn an encoding that captured the digits 0 to 9. This encoded layer of the network is referred to as the latent variable, and the latent variables are used to decide which class of output should be generated. If latent variables corresponded to a 1, the decoding portion of the network would generate output that resembled a 1.
 
 The CAE trains on each dataset separately, so that separate models are created for the George Washington dataset, the Parzival dataset, and the Wycliffe dataset. In the evaluation chapter, these models generate ``restored" versions of the word images before word retrieval takes place, and results are compared to the non-restored word image set.
 
-The CAE was implemented using Keras \cite{chollet2015keras}, with TensorFlow \cite{abadi2016tensorflow} used as the backend. (\textbf{TODO add CAE figure}).
+The CAE was implemented using Keras \cite{chollet2015keras}, with TensorFlow \cite{abadi2016tensorflow} used as the backend. The full architecture, visualized in figure \ref{fig:cae-schematic}, includes only three kinds of layers: convolutional layers, pooling layers, and upsampling layers.
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=14cm]{cae}
+\end{center}
+\caption{A diagram of the convolutional autoencoder. The thin blue layers at the far left and far right represent the input and output, respectively. Teal blocks represent convolutional filters, white blocks represent pooling layers, and yellow blocks represent upsampling layers.}
+\label{fig:cae-schematic}
+\end{figure}
 
 \subsection{CAE for Feature Extraction}
 When using the CAE as a feature extractor, no changes are made to the network architecture: the network receives an input image and performs the convolutional filters just the same as a normal prediction. The only difference is that the network is pruned at the final convolutional layer, or the ``encoded representation'' layer. The output of this layer is flattened into a 1-dimensional feature vector to be used in word spotting.
