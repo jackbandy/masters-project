@@ -23,13 +23,15 @@ import pdb
 def main():
     image_dir = '../data/aligned_sample_pages/'
     images = os.listdir(image_dir)
+    output_dir = '../data/auto_segmented_samples/'
+    if not (os.path.isdir(output_dir)):
+        os.mkdir(output_dir)
 
     all_estimates = []
-    #all_estimates += getWordEstimates(image_dir+images[3], images[3])
-
     for name in images:
         if name !='.DS_Store':
-            all_estimates += getWordEstimates(image_dir+name, name)
+            all_estimates += getWordEstimates(image_dir+name, name,
+                    image_num=images.index(name))
     '''
     with open('estimates.csv', 'w') as out:
         for est in all_estimates:
@@ -37,10 +39,9 @@ def main():
                 est[0], est[1], est[2], est[3], est[4], est[5]))
     '''
 
-def getWordEstimates(image_path, image_name):
+def getWordEstimates(image_path, image_name, image_num):
     page_image = util.loadImage(image_path)
     binary_image = util.removeBackground(page_image)
-    plt.imshow(binary_image, cmap='gray')
 
     line_locations = smartHorizontalLines(binary_image)
     tilted_lines = tiltLines(binary_image, line_locations)
@@ -54,6 +55,8 @@ def getWordEstimates(image_path, image_name):
     #words = smartVerticalLines(binary_image[line_locations[5]:line_locations[6], :],test_plots=True)
     
     estimates = []
+    line_num=0
+    word_num=0
    
     edge = binary_image.shape[1]
     for tilted in tilted_lines:
@@ -61,21 +64,21 @@ def getWordEstimates(image_path, image_name):
         tmp_image = np.array(binary_image)
         for i in range(0,edge):
             center = int(tilted.predict(i))
-            top = center - avg_line_split
-            bot = center + avg_line_split
+            top = center - (avg_line_split)
+            bot = center + (avg_line_split)
             tmp_image[:top,i] = 0
             tmp_image[bot:,i] = 0
 
         left = tilted.predict(0)
         right = tilted.predict(edge)
-        line_top = int(min(left, right)) - avg_line_split
-        line_bot = int(min(left, right)) + avg_line_split
+        line_top = int(min(left, right)) - (2*avg_line_split)
+        line_bot = int(min(left, right)) + (2*avg_line_split)
 
         word_locations = smartVerticalLines(tmp_image[line_top:line_bot, :])
         previous_word_bound = 0
-        for w in word_locations:
+        for w in word_locations[:-1]:
             center = int(tilted.predict(w))
-            plt.plot((w,w), (center-avg_line_split, center+avg_line_split), 'w')
+            #plt.plot((w,w), (center-avg_line_split, center+avg_line_split), 'r')
             #estimates.append([image_name,previous_line_bound,previous_word_bound,l,w,"unlabeled"])
             previous_word_bound = w
 
@@ -86,7 +89,8 @@ def getWordEstimates(image_path, image_name):
     #for w in word_locations:
         #plt.plot((w,w), (previous_line_bound, l), 'w')
 
-    plt.show()
+    #plt.axis('off')
+    #plt.show()
 
     return estimates
 
@@ -154,22 +158,31 @@ def smartVerticalLines(image, test_plots=False):
     hist = np.sum(im_array, axis=0)
     bl = gaussian_filter(hist, sigma=10)
     lows = argrelmin(bl)[0]
+    if test_plots:
+        plt.plot(hist)
+        plt.show()
+
 
     est_mean = np.mean(hist)
     est_std = np.std(hist)
-    est_low = int(est_mean - (0.85*est_std))
+    est_low = int(est_mean - (0.7*est_std))
     if test_plots:
         plt.plot(bl)
-        plt.plot(lows,bl[lows],'bo')
-        plt.plot((0,image.shape[1]), (est_mean, est_mean))
-        plt.plot((0,image.shape[1]), (est_low, est_low))
+        #plt.plot(lows,bl[lows],'bo')
+        #plt.plot((0,image.shape[1]), (est_mean, est_mean))
+        #plt.plot((0,image.shape[1]), (est_low, est_low))
         plt.show()
 
     bl = gaussian_filter(hist, sigma=5)
     final_lows = []
 
+    # left bound
+    left_bound = np.where(hist > est_low)[0][0] - 10
+    final_lows.append(left_bound)
     if test_plots:
-        plt.imshow(image)
+        plt.imshow(image,cmap='gray')
+        plt.axis('off')
+        plt.plot((left_bound,left_bound),(0,image.shape[0]), 'w')
 
     previous = 0
     for l in lows:
@@ -177,9 +190,19 @@ def smartVerticalLines(image, test_plots=False):
             final_lows.append(l)
             previous = hist[l]
             if test_plots:
-                plt.plot((l,l),(0,image.shape[0]))
+                plt.plot((l,l),(0,image.shape[0]), 'w')
+
+    # right bound
+    try:
+        right_bound = lows[-1]
+        reversed_edge_hist = np.fliplr([hist[right_bound:]])[0]
+        cross_point = np.where(reversed_edge_hist > est_low)[0][0]
+        right_bound = image.shape[1] - cross_point + 10
+    except Exception:
+        right_bound = image.shape[1] - 10
 
     if test_plots:
+        plt.plot((right_bound,right_bound),(0,image.shape[0]), 'w')
         plt.show()
 
     return final_lows

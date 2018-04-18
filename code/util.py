@@ -12,7 +12,6 @@ import PIL.ImageOps
 import numpy as np
 import imageio
 import os
-import matplotlib.pyplot as plt
 import cv2
 import collections
 from keras.models import load_model

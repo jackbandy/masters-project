@@ -26,9 +26,7 @@
 %the title pages
 \frontmatter
 \maketitle
-\begin{acknowledgments}
-Acknowledge people/things here
-\end{acknowledgments}
+
 \tableofcontents\clearpage
 \listoffigures\clearpage
 \listoftables\clearpage
@@ -151,7 +149,7 @@ A semi-automated approach to word spotting leverages user-provided labels of wor
 
 
 \subsection{A Technique for Virtual Ink Restoration}
-To deal with the problem of damaged and distorted words, this project presents a variational autoencoder (VAE) for restoring words with missing or incomplete letters, which is successfully trained to capture and recreate the  original appearance of a damaged word. Not only does the recreation lead to accuracy improvements for automated recognition, it also allows users to view an enhanced version of the damaged manuscript.
+To deal with the problem of damaged and distorted words, this project presents a convolutional autoencoder (CAE) for restoring words with missing or incomplete letters, which is successfully trained to capture and recreate the  original appearance of a damaged word. Not only does the recreation lead to accuracy improvements for automated recognition, it also allows users to view an enhanced version of the damaged manuscript.
 
 
 
@@ -254,35 +252,35 @@ HoG features were extracted using a scikit-image implementation \cite{van2014sci
 
 
 %
-% VAE Details
+% CAE Details
 %
-\section{Variational Autoencoder}
-\label{sec:vae}
+\section{Convolutional Autoencoder}
+\label{sec:cae}
 
-The purpose of the Variational Autoencoder (VAE) \cite{kingma2013auto} in this system is to learn an encoded representation of word images, without the need for ground truth label. After being trained, the VAE can be used to encode word images into features, as well as to enhance damaged words before word spotting takes place.
+The purpose of the Convolutional Autoencoder (CAE) \cite{masci2011stacked} in this system is to learn an encoded representation of word images, without the need for ground truth label. After being trained, the CAE can be used to encode word images into features, as well as to enhance damaged words before word spotting takes place.
 
-The VAE is an unsupervised generative technique for learning a statistical distribution of input data. In this case, the VAE works on top of a convolutional neural network and is trained using stochastic gradient descent. As a generative model, its job ``is to somehow capture the dependencies between pixels" \cite{doersch2016tutorial}. After proper training, the VAE should be able to take an input image, create an encoded representation of that image, and then generate a similar image using only the encoding.
+The CAE is an unsupervised generative technique for learning a statistical distribution of input data. In this case, the CAE works on top of a convolutional neural network and is trained using stochastic gradient descent. As a generative model, its job ``is to somehow capture the dependencies between pixels" \cite{doersch2016tutorial}. After proper training, the CAE should be able to take an input image, create an encoded representation of that image, and then generate a similar image using only the encoding.
 
-For example, an idealized VAE trained on the MNIST dataset would learn an encoding that captured the digits 0 to 9. This encoded layer of the network is referred to as the latent variable, and the latent variables are used to decide which class of output should be generated. If latent variables corresponded to a 1, the decoding portion of the network would generate output that resembled a 1.
+For example, an idealized CAE trained on the MNIST dataset would learn an encoding that captured the digits 0 to 9. This encoded layer of the network is referred to as the latent variable, and the latent variables are used to decide which class of output should be generated. If latent variables corresponded to a 1, the decoding portion of the network would generate output that resembled a 1.
 
-The VAE trains on each dataset separately, so that separate models are created for the George Washington dataset, the Parzival dataset, and the Wycliffe dataset. In the evaluation chapter, these models generate ``restored" versions of the word images before word retrieval takes place, and results are compared to the non-restored word image set.
+The CAE trains on each dataset separately, so that separate models are created for the George Washington dataset, the Parzival dataset, and the Wycliffe dataset. In the evaluation chapter, these models generate ``restored" versions of the word images before word retrieval takes place, and results are compared to the non-restored word image set.
 
-The VAE was implemented using Keras \cite{chollet2015keras}, with TensorFlow \cite{abadi2016tensorflow} used as the backend. (\textbf{TODO add VAE figure}).
+The CAE was implemented using Keras \cite{chollet2015keras}, with TensorFlow \cite{abadi2016tensorflow} used as the backend. (\textbf{TODO add CAE figure}).
 
-\subsection{VAE for Feature Extraction}
-When using the VAE as a feature extractor, no changes are made to the network architecture: the network receives an input image and performs the convolutional filters just the same as a normal prediction. The only difference is that the network is pruned at the final convolutional layer, or the ``encoded representation'' layer. The output of this layer is flattened into a 1-dimensional feature vector to be used in word spotting.
+\subsection{CAE for Feature Extraction}
+When using the CAE as a feature extractor, no changes are made to the network architecture: the network receives an input image and performs the convolutional filters just the same as a normal prediction. The only difference is that the network is pruned at the final convolutional layer, or the ``encoded representation'' layer. The output of this layer is flattened into a 1-dimensional feature vector to be used in word spotting.
 
-\subsection{VAE for Restoration}
+\subsection{CAE for Restoration}
 For damaged datasets, it is desirable to reconstruct the input to more closely resemble their original form. In the case of damaged word images, restoration involves replacing blank or missing pixels with expected values in a way that completes the shape of the expected word. The computer vision community refers to this task of filling in corrupted images as ``inpainting.''
 
-VAEs have previously been used for inpainting \cite{xie2012image}, and can be trained to do so with a fairly simple modification: rather than using the same image as input and ground truth, a damaged version of the ground truth is used as the input image. Then, training for the VAE involves learning how to create the undamaged version of the image based on the input/damaged version. This method is used to train a network hereafter referred to as the restorative network, and results can be seen in figure \ref{fig:damaged-word-samples}.
+CAEs have previously been used for inpainting \cite{xie2012image}, and can be trained to do so with a fairly simple modification: rather than using the same image as input and ground truth, a damaged version of the ground truth is used as the input image. Then, training for the CAE involves learning how to create the undamaged version of the image based on the input/damaged version. This method is used to train a network hereafter referred to as the restorative network, and results can be seen in figure \ref{fig:damaged-word-samples}.
 
 
 %
 % Word retrieval Section
 %
 \section{Word Retrieval}
-The current system employs a simple query-by-example method. This means that the query requires a word image as input, rather than a string. Given a word image as input, the query system calculates the feature vector (either HoG or VAE encoding) and compares it to the feature vectors for all other word images. The results are sorted by the cosine distance between vectors, and returned in order of proximity.
+The current system employs a simple query-by-example method. This means that the query requires a word image as input, rather than a string. Given a word image as input, the query system calculates the feature vector (either HoG or CAE encoding) and compares it to the feature vectors for all other word images. The results are sorted by the cosine distance between vectors, and returned in order of proximity.
 
 
 
@@ -337,13 +335,13 @@ The mean average precision ({\em MAP}) is an effective metric to holistically ev
 %
 %%
 \chapter{Results}
-The evaluation phase sought to determine whether VAE encodings of word images could be used for word spotting, and also if a VAE could reconstruct damaged words so as to more accurately classify them.
+The evaluation phase sought to determine whether CAE encodings of word images could be used for word spotting, and also if a CAE could reconstruct damaged words so as to more accurately classify them.
 
 %
 % Data Background Section
 %
 \section{Datasets}
-Three datasets were used to evaluate the VAE-based approach to word recognition and ink restoration. The first two are benchmark datasets from the literature, and the third is a custom scan of a publicly available document. Samples of all three datasets are shown in figure \ref{fig:dataset-samples}.
+Three datasets were used to evaluate the CAE-based approach to word recognition and ink restoration. The first two are benchmark datasets from the literature, and the third is a custom scan of a publicly available document. Samples of all three datasets are shown in figure \ref{fig:dataset-samples}.
 
 \begin{table}[h]
 \centering
@@ -386,9 +384,9 @@ Challenges discussed in section \ref{sec:challenges} explain why this test set w
 %
 \section{Basic Word Spotting}
 \label{sec:basic-results}
-The goal of the basic word spoting experiments was to determine whether the latent variables in a VAE could adequately serve as features during word spotting. Histogram of oriented gradients (HoG) is a popular feature extraction method for word spotting \cite{giotis2017survey}. Although other optimizations combined with advanced feature extraction produce better results, HoG is a sufficient benchmark with which to compare alternate features.
+The goal of the basic word spoting experiments was to determine whether the latent variables in a CAE could adequately serve as features during word spotting. Histogram of oriented gradients (HoG) is a popular feature extraction method for word spotting \cite{giotis2017survey}. Although other optimizations combined with advanced feature extraction produce better results, HoG is a sufficient benchmark with which to compare alternate features.
 
-Table \ref{tab:word-spotting} shows that VAE-encoded features outperform HoG features on all three datasets. Word spotting precision at k=5 (P@5) and mean average precision (MAP) over all queries are shown in the table. Although VAE features offer negligible improvement on the George Washington dataset, it is the decisive winner for the Parzival and Wycliffe sets.
+Table \ref{tab:word-spotting} shows that CAE-encoded features outperform HoG features on all three datasets. Word spotting precision at k=5 (P@5) and mean average precision (MAP) over all queries are shown in the table. Although CAE features offer negligible improvement on the George Washington dataset, it is the decisive winner for the Parzival and Wycliffe sets.
 
 \begin{figure}[t]
 \begin{center}
@@ -406,11 +404,11 @@ Table \ref{tab:word-spotting} shows that VAE-encoded features outperform HoG fea
 \textbf{Data}  & \textbf{Feature} & \textbf{P@5} & \textbf{MAP} \\
 \hline
 Original GW    & HoG			& 0.747          & 0.675          \\
-Original GW    & VAE Encoding 	& 0.748          & 0.678          \\
+Original GW    & CAE Encoding 	& 0.748          & 0.678          \\
 Original Parzival & HoG                     & 0.689          & 0.637          \\
-Original Parzival & VAE Encoding 	& 0.771          & 0.720          \\
+Original Parzival & CAE Encoding 	& 0.771          & 0.720          \\
 Original Wycliffe & HoG			& 0.631          & 0.584          \\
-Original Wycliffe & VAE Encoding	& 0.768          & 0.662         
+Original Wycliffe & CAE Encoding	& 0.768          & 0.662         
 \end{tabular}
 \caption{Word Spotting Results}
 \label{tab:word-spotting}
@@ -424,9 +422,9 @@ Original Wycliffe & VAE Encoding	& 0.768          & 0.662
 %
 \section{Classification on Damaged Datasest}
 \label{sec:damaged-results}
-The goal of experiments on damaged word images was twofold: first, to determine whether VAE features were more suitable for damaged data, and second, to set a baseline performance to be compared against in the following section.
+The goal of experiments on damaged word images was twofold: first, to determine whether CAE features were more suitable for damaged data, and second, to set a baseline performance to be compared against in the following section.
 
-Table \ref{tab:damaged-results} shows that VAE encoding outperforms HoG on the damaged datasets, even on the George Washington dataset which saw little difference between features in the previous section.
+Table \ref{tab:damaged-results} shows that CAE encoding outperforms HoG on the damaged datasets, even on the George Washington dataset which saw little difference between features in the previous section.
 
 \begin{figure}[t]
 \begin{center}
@@ -435,7 +433,7 @@ Table \ref{tab:damaged-results} shows that VAE encoding outperforms HoG on the d
 \fbox{\includegraphics[height=1.4cm]{gw-reconstructed-word-sample}}
 \fbox{\includegraphics[height=1.4cm]{pz-reconstructed-word-sample}}
 \end{center}
-\caption{On the top, samples of word images after simulated damage, from the George Washington dataset (left) and the Parzival dataset (right). Respective output from the reconstructive VAE is shown on the bottom.}
+\caption{On the top, samples of word images after simulated damage, from the George Washington dataset (left) and the Parzival dataset (right). Respective output from the reconstructive CAE is shown on the bottom.}
 \label{fig:damaged-word-samples}
 \end{figure}
 
@@ -445,9 +443,9 @@ Table \ref{tab:damaged-results} shows that VAE encoding outperforms HoG on the d
 \textbf{Data}  & \textbf{Feature} & \textbf{P@5} & \textbf{MAP} \\
 \hline
 Damaged GW    & HoG			& 0.602          & 0.547          \\
-Damaged GW    & VAE Encoding 	& 0.650          & 0.592          \\
+Damaged GW    & CAE Encoding 	& 0.650          & 0.592          \\
 Damaged Parzival & HoG                     & 0.515          & 0.477          \\
-Damaged Parzival & VAE Encoding 	& 0.615          & 0.572          \\   
+Damaged Parzival & CAE Encoding 	& 0.615          & 0.572          \\   
 \end{tabular}
 \caption{Results for ``Damaged'' Datasets}
 \label{tab:damaged-results}
@@ -462,7 +460,7 @@ Damaged Parzival & VAE Encoding 	& 0.615          & 0.572          \\
 \section{Reconstruction Results}
 \label{sec:reconstruction-results}
 
-Finally, word spotting performance is evaluated on reconstructed word images. The change represents the improvement over classification results on the original data (Wycliffe) or damaged data (George Washington and Parzival). Details on the restorative VAE can be found in section \ref{sec:vae}, and discussion of these results can be found in section \ref{sec:findings}.
+Finally, word spotting performance is evaluated on reconstructed word images. The change represents the improvement over classification results on the original data (Wycliffe) or damaged data (George Washington and Parzival). Details on the restorative CAE can be found in section \ref{sec:cae}, and discussion of these results can be found in section \ref{sec:findings}.
 
 \begin{table}[h]
 \centering
@@ -470,11 +468,11 @@ Finally, word spotting performance is evaluated on reconstructed word images. Th
 \textbf{Data}  & \textbf{Feature} & \textbf{P@5 (change)} & \textbf{MAP (change)} \\
 \hline
 Reconstructed GW    & HoG			& 0.644 (+0.042)          & 0.583 (+0.036)         \\
-Reconstructed GW    & VAE Encoding 	& 0.665 (+0.015)         & 0.604 (+0.012)         \\
+Reconstructed GW    & CAE Encoding 	& 0.665 (+0.015)         & 0.604 (+0.012)         \\
 Reconstructed Parzival & HoG                     & 0.554 (+0.039)         & 0.512 (+0.035)         \\
-Reconstructed Parzival & VAE Encoding 	& 0.620 (+0.005)         & 0.577 (+0.005)         \\
+Reconstructed Parzival & CAE Encoding 	& 0.620 (+0.005)         & 0.577 (+0.005)         \\
 Reconstructed Wycliffe & HoG                     & 0.873 (+0.242)         & 0.768 (+0.184)         \\
-Reconstructed Wycliffe & VAE Encoding 	& 0.859 (+0.091)         & 0.755 (+0.093)         \\
+Reconstructed Wycliffe & CAE Encoding 	& 0.859 (+0.091)         & 0.755 (+0.093)         \\
 \end{tabular}
 \caption{Results for Reconstructed Data}
 \label{tab:reconstructed-results}
@@ -494,20 +492,20 @@ Reconstructed Wycliffe & VAE Encoding 	& 0.859 (+0.091)         & 0.755 (+0.093)
 
 \section{Findings}
 \label{sec:findings}
-Besides demonstrating a semi-supervised approach to word spotting in historical documents, this project demonstrated that VAEs are useful at two points in the word spotting pipeline. First, the encoded representation of word images can be used as features for the matching process. Second, generative VAEs can be used to restore damaged word images, producing an enhanced version for subsequent word spotting.
+Besides demonstrating a semi-supervised approach to word spotting in historical documents, this project demonstrated that CAEs are useful at two points in the word spotting pipeline. First, the encoded representation of word images can be used as features for the matching process. Second, generative CAEs can be used to restore damaged word images, producing an enhanced version for subsequent word spotting.
 
-\subsection{VAE for Feature Extraction}
-Results on three separate datasets showed conclusively that the encoded representation of word images outperformed HoG features for word spotting. This was the case in both section \ref{sec:basic-results} and \ref{sec:damaged-results}, where the {\em P@5} and {\em MAP} metrics were higher when matching VAE features.
+\subsection{CAE for Feature Extraction}
+Results on three separate datasets showed conclusively that the encoded representation of word images outperformed HoG features for word spotting. This was the case in both section \ref{sec:basic-results} and \ref{sec:damaged-results}, where the {\em P@5} and {\em MAP} metrics were higher when matching CAE features.
 
-Results on the damaged datasets, shown in section \ref{sec:damaged-results}, were especially clear.  The VAE features prove to be more robust to simulated damage, likely because the latent variables capture high-level characteristics. If a small portion of the word image is changed, the VAE is still able to encode those characteristics to some degree, and the resulting feature vector will still reflect some similarity.
+Results on the damaged datasets, shown in section \ref{sec:damaged-results}, were especially clear.  The CAE features prove to be more robust to simulated damage, likely because the latent variables capture high-level characteristics. If a small portion of the word image is changed, the CAE is still able to encode those characteristics to some degree, and the resulting feature vector will still reflect some similarity.
 
 In contrast, HoG features change immediately after changes to a single pixel value. Thus, the damage regions created a significantly different feature vector that fails to capture the higher-level characteristics, leading to worse performance on the damaged datasets.
 
 
-\subsection{VAE for Ink Restoration}
-A restorative VAE was shown to improve results on datasets with simulated damage, as well as the Wycliffe test set. The example reconstructions shown in figure \ref{fig:damaged-word-samples} suggest that the network reconstructs images well enough to be visually recognizable to a human, and results in \ref{sec:reconstruction-results} demonstrate that word spotting results improve significantly on the reconstructed data.
+\subsection{CAE for Ink Restoration}
+A restorative CAE was shown to improve results on datasets with simulated damage, as well as the Wycliffe test set. The example reconstructions shown in figure \ref{fig:damaged-word-samples} suggest that the network reconstructs images well enough to be visually recognizable to a human, and results in \ref{sec:reconstruction-results} demonstrate that word spotting results improve significantly on the reconstructed data.
 
-This finding is immediately useful for word spotting systems that work on damaged handwritten documents. The VAE can be understood as an enhancement to the raw word images which lead to more useful feature extraction for word spotting. Not only does the network ``fill in'' damaged portions of the word image with plausible pixel values, it also causes different occurrences of the same word to more closely resemble each other. This leads to more similar feature vectors between word occurrences, and greater word spotting accuracy as the end result.
+This finding is immediately useful for word spotting systems that work on damaged handwritten documents. The CAE can be understood as an enhancement to the raw word images which lead to more useful feature extraction for word spotting. Not only does the network ``fill in'' damaged portions of the word image with plausible pixel values, it also causes different occurrences of the same word to more closely resemble each other. This leads to more similar feature vectors between word occurrences, and greater word spotting accuracy as the end result.
 
 
 
@@ -515,7 +513,7 @@ This finding is immediately useful for word spotting systems that work on damage
 \label{sec:challenges}
 Although the word spotting system detailed in this paper demonstrably improves recognition on damaged datasets, various challenges arose at certain parts of the pipeline. Precise segmentation, ground truth collection, and query-by-example present three challenges encountered which limit the final product.
 
-Although segmentation-free approaches to word spotting have been gaining popularity, this project assumed word segmentation. Specifically, the VAE assumed input samples of a fixed dimension, and that each input sample would contain a single word. For the George Washington and Parzival datasets, the segmentation phase was already completed, but for the custom Wycliffe dataset this was not the case.
+Although segmentation-free approaches to word spotting have been gaining popularity, this project assumed word segmentation. Specifically, the CAE assumed input samples of a fixed dimension, and that each input sample would contain a single word. For the George Washington and Parzival datasets, the segmentation phase was already completed, but for the custom Wycliffe dataset this was not the case.
 
 The methods section details an algorithm which accurately finds lines of words. After fine-tuning the thresholds and introducing gaussian smoothing to the projection profile, this algorithm performed remarkably well on every page. However, the same adjustments did not produce reliably accurate word segmentation. The space between words varies enough that, unlike line segmentation, a global threshold is unsuitable. Thus, the resulting word images for the Wycliffe dataset often include more than one word (when words were close together) or a partial word (when letters in a word were far apart). This led to the ``segmentation error'' button in the GUI, which flags the sample for re-segmentation.
 
@@ -527,7 +525,7 @@ Lastly, the semi-supervised nature of the system means query-by-text is unsuppor
 
 \section{Future Work}
 \subsection{Alternate Generative Models} 
-Those exploring the use of VAEs for word spotting should investigate alternative approaches to generative neural networks. The VAE relies on fairly simple statistical models which can limit their performance. Generative Adversarial Networks (GANs) \cite{goodfellow2014generative} leverage a game-like training approach, while autoregressive models \cite{oord2016pixel} aim to learn a conditional distribution of the data. Although these different generative approaches present their own unique challenges, compromising on attributes such as training time and efficiency can lead to better results in the long-term.
+Those exploring the use of CAEs for word spotting should investigate alternative approaches to generative neural networks. The CAE relies on fairly simple statistical models which can limit their performance. Generative Adversarial Networks (GANs) \cite{goodfellow2014generative} leverage a game-like training approach, while autoregressive models \cite{oord2016pixel} aim to learn a conditional distribution of the data. Although these different generative approaches present their own unique challenges, compromising on attributes such as training time and efficiency can lead to better results in the long-term.
 
 
 
