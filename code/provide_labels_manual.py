@@ -22,9 +22,9 @@ import cluster
 WORD_IMAGES_PATH = '../data/norm_auto_segmented_samples/'
 WORD_LABELS_PATH = '../data/word_labels.pkl'
 #ORDER = 'random'
-ORDER = 'common'
+#ORDER = 'common'
 #ORDER = 'rare'
-#ORDER = 'appearance'
+ORDER = 'appearance'
 
 
 class Application(tk.Frame):
@@ -34,6 +34,7 @@ class Application(tk.Frame):
         samples, _, _= util.collectSamples(WORD_IMAGES_PATH, binarize=False,
                 scale_to_fill=True, fixed_max_width=624, fixed_max_height=128)
         self.sample_features = util.getHogForSamples(samples, scale=2)
+        print("Features shape: {}".format(self.sample_features.shape))
         self.current_cluster = 0
         self.current_index = 0
         # distance matrix
